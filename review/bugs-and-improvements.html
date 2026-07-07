@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMS Man — Bugs, Missing Features &amp; Improvements</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1d212a; --ink:#e6e8ec;
+    --muted:#9aa3b0; --line:#262b35; --accent:#6ea8fe; --link:#8ab4ff;
+    --crit:#ff5d5d; --high:#ff9e3d; --med:#ffd23d; --low:#7bd88f; --info:#6ea8fe;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--link);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{display:flex;max-width:1400px;margin:0 auto;}
+  nav.toc{position:sticky;top:0;align-self:flex-start;height:100vh;overflow:auto;width:300px;min-width:300px;padding:24px 18px;border-right:1px solid var(--line);background:var(--panel);}
+  nav.toc h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 0 8px}
+  nav.toc a{display:block;padding:4px 8px;border-radius:6px;color:var(--ink);font-size:13.5px;margin:1px 0}
+  nav.toc a:hover{background:var(--panel2);text-decoration:none}
+  main{flex:1;padding:36px 48px;max-width:1040px;min-width:0}
+  header.hero{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:28px}
+  header.hero h1{margin:0 0 6px;font-size:30px;letter-spacing:-.01em}
+  header.hero p{margin:4px 0;color:var(--muted)}
+  .pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid var(--line)}
+  .stats{display:flex;gap:14px;flex-wrap:wrap;margin:22px 0}
+  .stat{flex:1;min-width:120px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .n{font-size:26px;font-weight:700}
+  .stat .l{font-size:12.5px;color:var(--muted)}
+  h2.sec{margin:42px 0 6px;font-size:22px;border-left:4px solid var(--accent);padding-left:12px}
+  h2.sec .sub{font-size:13px;color:var(--muted);font-weight:400;display:block;margin-top:2px;padding-left:0}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
+  .badge{display:inline-block;padding:2px 9px;border-radius:6px;font-size:11.5px;font-weight:700;color:#0c0e12}
+  .b-crit{background:var(--crit)} .b-high{background:var(--high)} .b-med{background:var(--med)} .b-low{background:var(--low)} .b-info{background:var(--info)}
+  .item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:16px 0}
+  .item h3{margin:0 0 4px;font-size:17px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .item h3 .id{color:var(--muted);font-weight:600;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .loc{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;color:#b9c2d0;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;display:inline-block;margin:2px 4px 2px 0;word-break:break-all}
+  .item p{margin:8px 0}
+  .lab{font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .fix{background:var(--panel2);border-left:3px solid var(--low);padding:8px 12px;border-radius:0 8px 8px 0;margin-top:8px}
+  .impact{background:var(--panel2);border-left:3px solid var(--high);padding:8px 12px;border-radius:0 8px 8px 0;margin-top:8px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.8px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+  pre{background:#0c0e13;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.6px;line-height:1.5}
+  pre .c{color:#6b7686}
+  pre .k{color:#c792ea} pre .s{color:#c3e88d} pre .f{color:#82aaff} pre .n{color:#f78c6c}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--ink)}
+  .chk{list-style:none;padding-left:0}
+  .chk li{padding:6px 0 6px 26px;position:relative;border-bottom:1px solid var(--line)}
+  .chk li:before{content:"✗";position:absolute;left:4px;color:var(--crit);font-weight:700}
+  .chk li.ok:before{content:"✓";color:var(--low)}
+  .chk li.partial:before{content:"~";color:var(--med)}
+  footer{margin-top:48px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  .note{color:var(--muted);font-size:13.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc">
+  <strong style="font-size:15px">SMS Man Review</strong>
+  <div class="note" style="margin:6px 0 12px">Bugs &amp; Improvements</div>
+  <a href="code-review.html">→ Code Review &amp; "How it works"</a>
+  <h2>Sections</h2>
+  <a href="#summary">Executive summary</a>
+  <a href="#critical">① Critical &amp; high bugs</a>
+  <a href="#medium">② Medium bugs</a>
+  <a href="#low">③ Low / polish bugs</a>
+  <a href="#missing">④ Missing features</a>
+  <a href="#playstore">⑤ Play Store readiness</a>
+  <a href="#improve">⑥ Improvements / tech debt</a>
+  <a href="#priority">⑦ Suggested priority order</a>
+  <h2>Top bugs</h2>
+  <a href="#b1">B1 · Delivery/sent status</a>
+  <a href="#b2">B2 · Blocking is broken</a>
+  <a href="#b3">B3 · Multi-recipient drop</a>
+  <a href="#b4">B4 · Notification tap nav</a>
+  <a href="#b5">B5 · SEND/SENDTO ignored</a>
+  <a href="#b6">B6 · Notif history no-op</a>
+  <a href="#b7">B7 · Mute does nothing</a>
+  <a href="#b8">B8 · Default SIM ignored</a>
+  <a href="#b9">B9 · Destructive DB migration</a>
+</nav>
+
+<main>
+<header class="hero">
+  <h1>SMS Man — Bugs, Missing Features &amp; Improvements</h1>
+  <p>A full read-through of the Android SMS/MMS client in this repository, against the stated goal of a
+     <strong>fully-featured, production-level, Play-Store-submittable</strong> app.</p>
+  <p class="note">Generated 2026-06-01 · package <code>com.abrarshakhi.smsman</code> · Kotlin 2.3.10 · Compose · Hilt · Room · Nav3 ·
+     ~90 Kotlin files reviewed. Companion document: <a href="code-review.html">Code Review &amp; architecture walkthrough</a>.</p>
+</header>
+
+<section id="summary">
+<h2 class="sec">Executive summary</h2>
+<p>The project is <strong>well-architected and surprisingly complete in surface area</strong> — clean layering (domain / data /
+framework / ui), MVI screens, Nav3, dynamic theming, onboarding with the default-SMS-app role, search, scheduling and a settings
+surface are all present and largely wired correctly. As a UI/architecture skeleton it is genuinely good.</p>
+<p>However, it is <strong>not production-ready</strong>. Several <em>core messaging guarantees are broken or unimplemented</em>:
+the sent/delivered status that the UI draws is decoded with the wrong number scheme, <strong>blocking does not actually block</strong>,
+the multi-recipient compose UI silently drops everyone but the first recipient, MMS is entirely a stub, notifications ignore mute and
+never show conversation history, and tapping a notification while the app is open doesn't open the thread. On top of that there are
+<strong>zero real tests</strong>, <strong>no string localization</strong>, a <strong>destructive DB migration</strong> left in, and a couple
+of <strong>Google Play policy risks</strong> (restricted SMS permissions + an unused <code>USE_EXACT_ALARM</code>).</p>
+
+<div class="stats">
+  <div class="stat"><div class="n" style="color:var(--crit)">9</div><div class="l">Critical / High bugs</div></div>
+  <div class="stat"><div class="n" style="color:var(--high)">11</div><div class="l">Medium bugs</div></div>
+  <div class="stat"><div class="n" style="color:var(--med)">8</div><div class="l">Low / polish</div></div>
+  <div class="stat"><div class="n" style="color:var(--info)">7</div><div class="l">Missing major features</div></div>
+  <div class="stat"><div class="n">~0%</div><div class="l">Real test coverage</div></div>
+</div>
+
+<div class="legend">
+  <span class="badge b-crit">CRITICAL</span><span class="note">data loss / core feature dead / release blocker</span>
+  <span class="badge b-high">HIGH</span><span class="note">important feature wrong</span>
+  <span class="badge b-med">MEDIUM</span><span class="note">noticeable defect</span>
+  <span class="badge b-low">LOW</span><span class="note">polish / minor</span>
+</div>
+</section>
+
+<!-- ============================ CRITICAL / HIGH ============================ -->
+<section id="critical">
+<h2 class="sec">① Critical &amp; high-severity bugs<span class="sub">These break a guarantee a messaging app must keep.</span></h2>
+
+<div class="item" id="b1">
+  <h3><span class="badge b-crit">CRITICAL</span> B1 — Sent / delivered status uses two incompatible number schemes; “Delivered” never shows <span class="id">#status-mapping</span></h3>
+  <span class="loc">domain/model/Message.kt:43–54</span>
+  <span class="loc">data/repository/MessageRepositoryImpl.kt:94</span>
+  <span class="loc">framework/receiver/SmsSentStatusReceiver.kt:35–44</span>
+  <span class="loc">framework/receiver/SmsDeliveredStatusReceiver.kt:36–46</span>
+  <span class="loc">ui/screens/chat/components/MessageBubble.kt:154–168</span>
+  <p>The <code>status</code> column is written with <strong>Android’s <code>Telephony.Sms.STATUS_*</code></strong> constants
+     (<code>NONE=-1</code>, <code>COMPLETE=0</code>, <code>PENDING=32</code>, <code>FAILED=64</code>) but read back through the app’s own
+     <code>MessageStatus.fromRaw()</code>, whose values are <code>None=-1, Sending=0, Sent=1, Delivered=2, Read=3, Failed=64</code>.
+     The two scales only line up by accident at <code>-1</code> and <code>64</code>:</p>
+  <pre><span class="c">// Receiver writes Telephony STATUS_COMPLETE = 0 …</span>
+messageDao.updateStatus(messageId, <span class="n">Telephony.Sms.STATUS_COMPLETE</span> <span class="c">/* 0 */</span>, errorCode)
+<span class="c">// … but the bubble decodes 0 as MessageStatus.Sending — not delivered/sent.</span>
+<span class="n">0</span>  -> Sending     <span class="c">// should mean COMPLETE/Delivered</span>
+<span class="n">32</span> -> (no match) -> None
+<span class="n">2,3</span> (Delivered, Read) <span class="c">// are NEVER written by any code path</span></pre>
+  <p>Because <code>MessageStatus.Delivered</code>/<code>Read</code> are never stored, the “double-check / delivered” branch in
+     <code>statusIcon()</code> is unreachable. Delivery reports are requested, received and recorded — and then rendered as a
+     perpetual <em>Sending</em> clock or a single check.</p>
+  <div class="impact"><span class="lab">Impact</span> The single most visible promise of an SMS app — “Sent / Delivered” ticks — is wrong.
+     Delivery receipts (a headline setting) have no visible effect.</div>
+  <p>Secondary defect in the same area: <code>SmsSentStatusReceiver</code> updates the <em>Telephony</em> row type via
+     <code>smsSender.updateRowType()</code> but never updates the <em>Room</em> <code>type</code>; the row only self-corrects later when the
+     <code>ContentObserver</code> re-imports. And the delivery receiver writes <code>status</code> only to Room, not to Telephony, so the next
+     import can clobber it.</p>
+  <div class="fix"><span class="lab">Fix</span> Pick one numbering scheme. Either (a) store domain <code>MessageStatus.raw</code> everywhere and
+     translate <code>Telephony.Sms.STATUS_*</code> → <code>MessageStatus</code> in the receivers, or (b) keep raw Telephony status in the DB and
+     translate at render time. Map <code>COMPLETE→Delivered</code>, <code>PENDING→Sending</code>, <code>FAILED→Failed</code>. Update the Room
+     <code>type</code> in the sent receiver too, and write delivery status to both stores (or stop double-sourcing status).</div>
+</div>
+
+<div class="item" id="b2">
+  <h3><span class="badge b-crit">CRITICAL</span> B2 — “Block” doesn’t block; two disconnected block stores + normalization mismatch <span class="id">#blocking</span></h3>
+  <span class="loc">ui/screens/chat/ChatViewModel.kt:194–201</span>
+  <span class="loc">data/repository/ConversationRepositoryImpl.kt:43–44</span>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:56, 156</span>
+  <span class="loc">data/repository/BlockedNumberRepositoryImpl.kt:25–33</span>
+  <span class="loc">ui/screens/blocked/BlockedNumbersScreen.kt:134</span>
+  <p>There are <strong>two unrelated notions of “blocked”</strong> that never talk to each other:</p>
+  <ul>
+    <li><strong>Chat → “Block sender”</strong> calls <code>conversationRepository.setBlocked(threadId,true)</code>, which only flips the
+        <code>conversations.blocked</code> column (moves the thread to the “Blocked” tab).</li>
+    <li><strong>Settings → Blocked numbers</strong> writes the separate <code>blocked_numbers</code> table.</li>
+    <li><strong>Inbound filtering</strong> (<code>SmsInboundHandler</code>) consults <em>only</em> <code>blocked_numbers</code>.</li>
+  </ul>
+  <p>So blocking a sender from the conversation (the obvious path) <strong>does not stop their messages</strong> — they keep arriving and
+     keep posting notifications. And even the Settings path is unreliable: the dialog stores the number <em>verbatim</em> (e.g.
+     <code>+8801…</code>), but the inbound check does <code>isBlocked(normalize(sender))</code> where <code>normalize</code> strips everything
+     but digits. An exact-string DAO match between <code>"+8801712345678"</code> (stored) and <code>"8801712345678"</code> (normalized)
+     <strong>fails</strong>.</p>
+  <div class="impact"><span class="lab">Impact</span> A core safety feature is effectively non-functional. Users will believe they’ve blocked a
+     harasser/spammer and keep receiving messages and notifications.</div>
+  <div class="fix"><span class="lab">Fix</span> Unify on one mechanism. Normalize numbers to E.164 once (see B-improve “phone normalization”) and store the normalized
+     form. Have <code>setBlocked(thread)</code> also insert every recipient address into <code>blocked_numbers</code> (and unblock symmetrically),
+     and make the inbound check normalize identically. Optionally integrate the system <code>BlockedNumberContract</code> (available to the
+     default SMS app) so blocks are shared OS-wide.</div>
+</div>
+
+<div class="item" id="b3">
+  <h3><span class="badge b-crit">CRITICAL</span> B3 — Multi-recipient compose silently drops all but the first recipient <span class="id">#multi-recipient</span></h3>
+  <span class="loc">ui/screens/compose/ComposeNewViewModel.kt:103–118</span>
+  <span class="loc">data/repository/MessageRepositoryImpl.kt:51</span>
+  <p>The New-message screen lets the user add <em>any number</em> of recipient chips and the ViewModel passes them all to
+     <code>SendRequest(recipients = …)</code>. But the repository does:</p>
+  <pre><span class="k">val</span> recipient = request.recipients.<span class="f">first</span>()  <span class="c">// everyone else is dropped, no warning</span></pre>
+  <p>The message is sent to the first recipient only; the others receive nothing and the user is told it succeeded. Group/MMS sending
+     (the comment says “M4”) was never implemented, yet the UI exposes the entry point.</p>
+  <div class="impact"><span class="lab">Impact</span> Silent message loss — the worst kind of messaging bug. A user composing to 5 people reaches 1.</div>
+  <div class="fix"><span class="lab">Fix</span> Short term: restrict the compose UI to a single recipient (or loop and send an individual SMS per recipient and create
+     a thread each). Long term: implement real group messaging via MMS. Never accept N recipients and silently use 1.</div>
+</div>
+
+<div class="item" id="b4">
+  <h3><span class="badge b-high">HIGH</span> B4 — Tapping a notification while the app is alive doesn’t open the thread <span class="id">#deeplink-newintent</span></h3>
+  <span class="loc">MainActivity.kt:31, 37, 43–55</span>
+  <p>The activity is <code>launchMode="singleTop"</code>. The deep link (<code>smsman://thread/&lt;id&gt;</code>) is parsed <strong>once in
+     <code>onCreate</code></strong> into a local <code>coldDeepLink</code> captured by the composition. When the app is already running, the OS
+     calls <code>onNewIntent()</code>, which only does <code>setIntent(intent)</code> — nothing re-parses the link or pushes a
+     <code>ChatRoute</code>:</p>
+  <pre><span class="k">override fun</span> <span class="f">onNewIntent</span>(intent: Intent) {
+    <span class="k">super</span>.onNewIntent(intent)
+    setIntent(intent)        <span class="c">// captured but never acted on → no navigation</span>
+}</pre>
+  <div class="impact"><span class="lab">Impact</span> The primary reason to tap a message notification — jump to that conversation — fails whenever the app is
+     in memory (the common case). Secondary: a cold deep-link starts the back-stack at <code>ChatRoute</code> only, so Back exits the app
+     instead of going to the conversation list.</div>
+  <div class="fix"><span class="lab">Fix</span> Expose the current intent as state (e.g. collect <code>Activity</code> new-intent into a <code>StateFlow</code>) and in a
+     <code>LaunchedEffect</code> push <code>ChatRoute(threadId)</code> onto the back stack. Seed the cold back-stack as
+     <code>[ConversationListRoute, ChatRoute(id)]</code> so Back works.</div>
+</div>
+
+<div class="item" id="b5">
+  <h3><span class="badge b-high">HIGH</span> B5 — <code>ACTION_SEND</code> / <code>ACTION_SENDTO</code> are advertised but never handled <span class="id">#send-intents</span></h3>
+  <span class="loc">AndroidManifest.xml:72–90</span>
+  <span class="loc">MainActivity.kt:48–55 (parses only the <code>smsman</code> scheme)</span>
+  <p>The manifest registers <code>MainActivity</code> for <code>SENDTO</code> (<code>sms:/smsto:/mms:/mmsto:</code>) and <code>SEND</code>
+     (text/image/video share). These are the standard “open in messenger” and “share to” entry points — and being a complete SMS app means
+     handling them. But <code>parseDeepLink()</code> returns <code>null</code> for anything that isn’t <code>smsman://thread</code>, so the app
+     just opens to the conversation list and discards the recipient/shared content.</p>
+  <div class="impact"><span class="lab">Impact</span> “Message” links from the dialer/contacts and “Share → SMS Man” from the gallery do nothing useful. For a default
+     SMS app this is expected, advertised behaviour that’s missing.</div>
+  <div class="fix"><span class="lab">Fix</span> Parse <code>ACTION_SENDTO</code>/<code>VIEW</code> with <code>sms:</code> schemes → pre-fill <code>ComposeNewRoute(recipient)</code>;
+     parse <code>ACTION_SEND</code> <code>EXTRA_TEXT</code>/<code>EXTRA_STREAM</code> → compose with body/attachment.</div>
+</div>
+
+<div class="item" id="b6">
+  <h3><span class="badge b-high">HIGH</span> B6 — Notification “unread history” loader is a no-op; MessagingStyle only ever shows one message <span class="id">#notif-history</span></h3>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:131–147</span>
+  <p>The code intends to load the thread’s unread messages so the notification re-renders the conversation. It actually discards the flow:</p>
+  <pre><span class="k">val</span> unread = messageDao.<span class="f">observeByThread</span>(threadId)
+    .<span class="f">let</span> { <span class="c">/* one-shot read */</span> }   <span class="c">// returns Unit; nothing is read</span>
+<span class="k">val</span> unreadList = <span class="f">listOf</span>(UnreadMessage(sysId, body, timestamp))  <span class="c">// only the newest</span></pre>
+  <p><code>MessagingStyle</code> is then built from a single-element list, so multiple unread messages in a thread never stack the way the
+     coordinator’s doc comment promises (“re-renders the whole conversation each time”).</p>
+  <div class="impact"><span class="lab">Impact</span> Notifications lose prior unread context; every new message replaces rather than appends, defeating the
+     <code>MessagingStyle</code> design.</div>
+  <div class="fix"><span class="lab">Fix</span> Actually read recent unread rows: <code>messageDao.observeByThread(threadId).first()</code> (it’s already a suspend context),
+     filter to inbound &amp; unread, map to <code>UnreadMessage</code>, cap at ~6, pass the list.</div>
+</div>
+
+<div class="item" id="b7">
+  <h3><span class="badge b-high">HIGH</span> B7 — Mute is recorded but ignored; muted threads still post high-priority notifications <span class="id">#mute</span></h3>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:141–147</span>
+  <span class="loc">framework/notification/MessageNotificationCoordinator.kt:48–100</span>
+  <p>Both the per-conversation overflow “Mute” and the multi-select “Mute” set <code>conversations.muted</code>. But the inbound path posts a
+     notification unconditionally — it never reads <code>existing?.muted</code>, and <code>postIncoming()</code> has no mute parameter and always
+     uses the high-importance <code>MESSAGES_DEFAULT</code> channel.</p>
+  <div class="impact"><span class="lab">Impact</span> Mute appears to work (toast says “Muted”) but does nothing. Also: the dedicated <code>MESSAGES_BLOCKED</code> /
+     low-priority channels exist but are never used.</div>
+  <div class="fix"><span class="lab">Fix</span> Pass the muted flag into <code>postIncoming</code>; if muted, either skip the notification or post silently
+     (<code>setSilent(true)</code> / a low-importance channel) with no vibration/sound.</div>
+</div>
+
+<div class="item" id="b8">
+  <h3><span class="badge b-high">HIGH</span> B8 — “Default SIM for sending” setting has no effect <span class="id">#default-sim</span></h3>
+  <span class="loc">ui/screens/settings/SettingsScreen.kt:125–135</span>
+  <span class="loc">domain/model/AppSettings.kt:10</span>
+  <span class="loc">data/repository/MessageRepositoryImpl.kt:43–111 (send)</span>
+  <p>On dual-SIM devices the user can pick a default subscription. It is persisted to DataStore and read back into <code>AppSettings</code> —
+     but <strong>no send path ever consults it</strong>. <code>ChatViewModel.send</code> uses <code>conv.subscriptionId ?: -1</code>;
+     <code>ComposeNewViewModel.send</code> hard-codes <code>-1</code> (SmsManager default). The setting is wired to the UI chip only.</p>
+  <div class="impact"><span class="lab">Impact</span> Dual-SIM users who choose a sending SIM are silently ignored; outbound goes on the system default SIM.</div>
+  <div class="fix"><span class="lab">Fix</span> When the request’s <code>subscriptionId</code> is <code>-1</code>, fall back to
+     <code>settings.defaultSubscriptionId</code> before handing off to <code>SmsSender</code>.</div>
+</div>
+
+<div class="item" id="b9">
+  <h3><span class="badge b-crit">CRITICAL</span> B9 — Destructive Room migration left enabled (data-loss landmine for v1.1) <span class="id">#db-migration</span></h3>
+  <span class="loc">di/DatabaseModule.kt:27–32</span>
+  <p>The DB is built with <code>fallbackToDestructiveMigration(dropAllTables = true)</code>. The in-code comment even says “Replace with real
+     <code>Migration()</code> steps before public release.” The schema is at <code>version = 1</code> now, so it’s harmless today — but the
+     <em>first</em> time you bump the schema after shipping, every user’s pins, archives, drafts, blocked flags, mutes and scheduled-message
+     rows are silently wiped.</p>
+  <div class="impact"><span class="lab">Impact</span> Guaranteed local-data loss on the first post-launch schema change. A release blocker for a “submittable” app.</div>
+  <div class="fix"><span class="lab">Fix</span> Add explicit <code>Migration</code> objects (you already export schemas to <code>app/schemas/</code> and depend on
+     <code>room-testing</code>, so migration tests are easy). Remove destructive fallback before the first store release.</div>
+</div>
+</section>
+
+<!-- ============================ MEDIUM ============================ -->
+<section id="medium">
+<h2 class="sec">② Medium-severity bugs</h2>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B10 — Replying from a notification doesn’t mark the thread read</h3>
+  <span class="loc">framework/receiver/NotificationReplyReceiver.kt:42–56</span>
+  <p>After a direct-reply succeeds the receiver cancels the notification but never calls <code>markThreadRead</code>, so the conversation’s
+     <code>unreadCount</code> stays elevated and the thread still shows an unread badge after you’ve answered it. (Mark-read and swipe-to-dismiss
+     do call it; reply is the outlier.)</p>
+  <div class="fix"><span class="lab">Fix</span> Call <code>messageRepository.markThreadRead(threadId)</code> on a successful reply.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B11 — Scheduled send uses inexact WorkManager, not AlarmManager — and requests exact-alarm permissions it never uses</h3>
+  <span class="loc">data/repository/ScheduledMessageRepositoryImpl.kt:40–66</span>
+  <span class="loc">AndroidManifest.xml:27–28</span>
+  <p>Scheduling enqueues a <code>OneTimeWorkRequest</code> with <code>setInitialDelay</code>. WorkManager is explicitly <em>not</em> exact — under
+     Doze/standby a “send at 9:00” can slip by many minutes to hours. Meanwhile the manifest declares
+     <code>SCHEDULE_EXACT_ALARM</code> + <code>USE_EXACT_ALARM</code> which are never used (no <code>AlarmManager</code> anywhere). See also B-PS3 —
+     <code>USE_EXACT_ALARM</code> is a Play-restricted permission.</p>
+  <div class="fix"><span class="lab">Fix</span> For time-critical sends use <code>AlarmManager.setExactAndAllowWhileIdle</code> → a receiver that enqueues the worker, or drop the
+     exact-alarm permissions and set user expectations (“approximately”). Don’t request restricted permissions you don’t use.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B12 — <code>RespondViaMessageService</code> never sends the canned reply</h3>
+  <span class="loc">framework/service/RespondViaMessageService.kt:21–25</span>
+  <p>The component exists (required for the role) but on <code>ACTION_RESPOND_VIA_MESSAGE</code> it just logs and <code>stopSelf()</code>. When a
+     user picks “reply with message” while declining a call, the system hands the text in the intent and expects the default app to send it —
+     here it’s dropped.</p>
+  <div class="fix"><span class="lab">Fix</span> Extract recipients from the intent data and the body from <code>EXTRA_TEXT</code> /
+     <code>Intent.EXTRA_TEXT</code>, then call <code>MessageRepository.send</code>.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B13 — External deletions/edits in the Telephony provider never propagate to Room</h3>
+  <span class="loc">data/telephony/TelephonyImporter.kt:38–48</span>
+  <p>The importer only <code>upsert</code>s the most-recent 1000 rows; it never deletes Room rows that disappeared from Telephony. If another SMS
+     app (or the system) deletes a message, the <code>ContentObserver</code> fires but the row lingers in Room and keeps showing in SMS Man. Over
+     time Room also drifts (rows imported earlier are never pruned).</p>
+  <div class="fix"><span class="lab">Fix</span> After import, reconcile: delete Room messages whose ids are no longer present in the imported window (bounded by the same
+     date range), or diff against the provider.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B14 — Search-in-conversation results don’t navigate anywhere</h3>
+  <span class="loc">ui/nav/AppNavHost.kt:83–88</span>
+  <span class="loc">ui/screens/search/SearchInThreadScreen.kt:61 (<code>onResultClick</code> defaults to <code>{}</code>)</span>
+  <p>The in-thread search builds tappable result rows, but the nav graph wires only <code>onBack</code>; <code>onResultClick</code> keeps its
+     no-op default. Tapping a match does nothing — you can’t jump to the message.</p>
+  <div class="fix"><span class="lab">Fix</span> Wire <code>onResultClick</code> to pop back to the chat and scroll the <code>LazyColumn</code> to that message id
+     (requires exposing a “scroll to id” signal to <code>ChatScreen</code>).</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B15 — Backup/restore writes only Room, bypassing Telephony, with no transaction or FK safety</h3>
+  <span class="loc">data/repository/BackupRepositoryImpl.kt:39–48</span>
+  <p>Import upserts conversations then messages with their original ids. Issues: (1) restored messages are <em>not</em> written back to the
+     Telephony provider, so they’re invisible to other SMS apps and the next sync can diverge/overwrite them; (2) no
+     <code>@Transaction</code> — a mid-import failure leaves a partial DB; (3) a message referencing a missing thread id violates the FK; (4)
+     importing onto a populated device can overwrite existing rows by id collision. Exported JSON is also plaintext message content.</p>
+  <div class="fix"><span class="lab">Fix</span> Wrap import in a Room transaction; validate/ensure parent conversations exist; decide whether restore should re-insert into
+     Telephony; consider id remapping; warn the user that the export is unencrypted.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B16 — Navigation back-stack is lost on process death</h3>
+  <span class="loc">ui/nav/AppNavHost.kt:21</span>
+  <p><code>val backStack = remember { mutableStateListOf(startKey) }</code> uses <code>remember</code>, not <code>rememberSaveable</code> or a
+     <code>ViewModel</code>. After the OS kills and restores the process (very common on Android), the user is dropped back to the start
+     destination, losing their place in a deep chat/settings flow.</p>
+  <div class="fix"><span class="lab">Fix</span> Hold the back stack in a <code>ViewModel</code> or make the route keys <code>@Serializable</code>/<code>Parcelable</code> and use a
+     saveable back stack (Nav3 supports saveable state holders).</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B17 — <code>ScheduledSendWorker</code> marks failed <em>and</em> returns <code>retry()</code>; duplicate-send risk</h3>
+  <span class="loc">framework/worker/ScheduledSendWorker.kt:40–45</span>
+  <p>On failure it both calls <code>markFailed()</code> (status → Failed, drops out of the pending list) and returns
+     <code>Result.retry()</code>. WorkManager will re-run with the same id and try to send again; the row is no longer “pending” but the worker
+     re-fetches it by id regardless. There’s also no idempotency guard, so a send that dispatched to <code>SmsManager</code> but then threw could
+     be re-sent.</p>
+  <div class="fix"><span class="lab">Fix</span> Choose one: either <code>Result.retry()</code> with a bounded attempt count and <em>without</em> marking failed until attempts are
+     exhausted, or <code>Result.failure()</code> after marking failed. Guard against re-send (check status at the top of <code>doWork</code>).</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B18 — AMOLED/“Black” theme is silently ignored when dynamic color is on (the default)</h3>
+  <span class="loc">ui/theme/Theme.kt:91–99</span>
+  <p>Selection order checks <code>canDynamic</code> before <code>themeMode == Black</code>. Since <code>dynamicColor</code> defaults to
+     <code>true</code> on Android 12+, choosing “AMOLED” yields the dynamic dark scheme (grey surfaces), never the true-black
+     <code>BlackColorScheme</code>, unless the user first turns off dynamic color. The two settings interact in a non-obvious way.</p>
+  <div class="fix"><span class="lab">Fix</span> Let <code>Black</code> force black surfaces even under dynamic color (apply <code>.copy(background/surface = Black)</code> to the
+     dynamic dark scheme), or disable the AMOLED chip while dynamic color is on with an explanation.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B19 — <code>allowBackup="true"</code> with default (empty) backup rules backs the message DB to the cloud</h3>
+  <span class="loc">AndroidManifest.xml:50–52</span>
+  <span class="loc">res/xml/backup_rules.xml, res/xml/data_extraction_rules.xml (both still template stubs)</span>
+  <p>Auto Backup is enabled and unconfigured, so the Room database (message bodies) and DataStore get backed up to Google Drive and
+     transferred device-to-device. Beyond the privacy consideration for an SMS app, a restore can repopulate Room with messages that no longer
+     match the new device’s Telephony provider, causing duplicates/ghosts.</p>
+  <div class="fix"><span class="lab">Fix</span> Decide deliberately: either exclude the message DB from backup (the Telephony provider is the source of truth anyway) or keep it
+     and reconcile on first launch. Fill in the extraction/backup rules rather than shipping the templates.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">MEDIUM</span> B20 — Recipient matching uses substring <code>contains()</code>, risking wrong-thread merges</h3>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:97</span>
+  <span class="loc">data/repository/MessageRepositoryImpl.kt:71</span>
+  <p><code>existing?.recipientAddresses?.takeIf { it.contains(sender) }</code> is a raw substring test. <code>"+1234"</code> “contains”
+     <code>"234"</code>; a short address can false-match a longer stored one. It’s a soft heuristic on a comma-joined string rather than a real
+     address comparison.</p>
+  <div class="fix"><span class="lab">Fix</span> Split on commas and compare normalized addresses for equality, don’t substring-match.</div>
+</div>
+</section>
+
+<!-- ============================ LOW ============================ -->
+<section id="low">
+<h2 class="sec">③ Low-severity / polish bugs</h2>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B21 — <code>LIKE</code> search doesn’t escape <code>%</code> / <code>_</code> wildcards</h3>
+  <span class="loc">data/db/dao/MessageDao.kt:39–56</span>
+  <p>Queries like <code>body LIKE '%' || :query || '%'</code> treat a user-typed <code>%</code> or <code>_</code> as a wildcard, so searching for
+     literally “50%” matches too much. Not a crash, but incorrect results.</p>
+  <div class="fix"><span class="lab">Fix</span> Escape wildcards and add <code>ESCAPE '\\'</code>, or use an FTS table for proper search.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B22 — Scheduling allows times in the past (sends immediately, no validation)</h3>
+  <span class="loc">ui/screens/chat/ChatScreen.kt:180–234</span>
+  <p>The date/time picker doesn’t prevent selecting a past instant; the delay is coerced to <code>0</code> and the message goes out at once with no
+     warning.</p>
+  <div class="fix"><span class="lab">Fix</span> Validate <code>scheduledAt &gt; now</code> and disable/explain the confirm button otherwise.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B23 — Default-SMS-app banner only refreshes after the in-app role prompt</h3>
+  <span class="loc">ui/screens/conversations/ConversationListScreen.kt:80–92</span>
+  <span class="loc">ui/screens/conversations/ConversationListViewModel.kt:67–69</span>
+  <p><code>onResume()</code> is called only from the role-request launcher callback, not on real Android <code>ON_RESUME</code>. If the user changes
+     the default SMS app via system Settings and returns, the “Not default” banner can be stale.</p>
+  <div class="fix"><span class="lab">Fix</span> Re-check on <code>Lifecycle.Event.ON_RESUME</code> (e.g. <code>LifecycleEventEffect</code>).</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B24 — <code>SimRepositoryImpl</code> reads the deprecated <code>SubscriptionInfo.number</code> (usually null)</h3>
+  <span class="loc">framework/SimRepositoryImpl.kt:31</span>
+  <p><code>info.number</code> is deprecated and returns empty on most carriers/Android versions without extra permission, so the SIM’s phone number
+     rarely shows.</p>
+  <div class="fix"><span class="lab">Fix</span> Use <code>SubscriptionManager.getPhoneNumber(subId)</code> (API 33+) with a graceful fallback.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B25 — Inbound contact resolution can block the 10s <code>goAsync()</code> window</h3>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:141</span>
+  <p>The receiver resolves the contact synchronously inside the <code>goAsync</code> window. Usually fast, but a slow <code>ContactsContract</code>
+     query plus DB writes risk the 10-second broadcast limit on a cold provider.</p>
+  <div class="fix"><span class="lab">Fix</span> Post the notification with the raw address first, resolve the contact lazily, then update the notification.</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B26 — Dead/duplicated code</h3>
+  <span class="loc">ui/screens/Placeholders.kt (empty “can be deleted” file)</span>
+  <span class="loc">data/telephony/TelephonySyncCoordinator.kt:100 &amp; ui/screens/conversations/ConversationListViewModel.kt:163 (identical private <code>collect()</code> helpers)</span>
+  <span class="loc">ui/screens/search/*Screen.kt (two copies of <code>buildHighlighted</code>)</span>
+  <p>Minor smells: an empty placeholder file, a hand-rolled <code>Flow.collect()</code> shim duplicated in two files (just use
+     <code>collect {}</code> / <code>collect { … }</code> directly), and a duplicated highlight helper.</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B27 — Notification action icons reuse the app icon; error <code>errorCode</code> never surfaced</h3>
+  <span class="loc">framework/notification/MessageNotificationCoordinator.kt:123,142,160</span>
+  <span class="loc">framework/receiver/SmsSentStatusReceiver.kt:33–35</span>
+  <p>Reply/Mark-read/Delete actions all use <code>R.drawable.ic_notification</code> instead of distinct glyphs. And a failed send stores a
+     <code>resultCode</code> as <code>errorCode</code> that the UI never reads/explains (no “tap to retry / why it failed”).</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">LOW</span> B28 — README &amp; Settings text are stale/contradictory</h3>
+  <span class="loc">README.md (Status table + “Known limitations”)</span>
+  <span class="loc">ui/screens/settings/SettingsScreen.kt:152,161 (“Export to XML”, “M5f”, “M5c” labels)</span>
+  <p>README says backup/restore is “deferred / none” and scheduled-from-chat “isn’t surfaced yet,” but both are implemented in code. Settings
+     says “Export to <strong>XML</strong>” though the code exports <strong>JSON</strong>, and surfaces internal milestone codes (“M5f”, “M5c”) to
+     end users.</p>
+  <div class="fix"><span class="lab">Fix</span> Reconcile docs with reality; remove milestone codes from user-facing copy.</div>
+</div>
+</section>
+
+<!-- ============================ MISSING FEATURES ============================ -->
+<section id="missing">
+<h2 class="sec">④ Missing features (vs. “fully-featured” SMS/MMS app)<span class="sub">Gaps between the stated ambition and what’s implemented.</span></h2>
+
+<div class="item">
+  <h3><span class="badge b-high">MAJOR</span> M1 — MMS is entirely a stub (receive, send, attachments)</h3>
+  <span class="loc">framework/receiver/MmsWapPushReceiver.kt:15–20 (logs the PDU size, decodes nothing)</span>
+  <span class="loc">data/db/dao/AttachmentDao.kt &amp; AttachmentEntity (declared but never read/written anywhere)</span>
+  <span class="loc">data/db/mapper/Mappers.kt:46 (<code>attachments = emptyList()</code> always)</span>
+  <span class="loc">data/telephony/TelephonyImporter.kt (SMS only — no <code>content://mms</code> join)</span>
+  <p>The app presents itself as an SMS/<strong>MMS</strong> client (manifest WAP-push receiver, <code>RECEIVE_MMS</code>, Coil “for MMS
+     attachments”, an MMS bubble label, an <code>Attachment</code> model + DAO). In reality: incoming MMS is logged and dropped; no PDU decode,
+     no MMSC download, no attachment storage; the entire <code>AttachmentDao</code> is dead code; outgoing MMS/attachment send isn’t built (the
+     attach button is a stub). Message bodies for MMS just render the literal text “MMS”.</p>
+  <div class="impact"><span class="lab">Impact</span> No photos, no group messaging, no subject lines — a large part of “fully featured.”</div>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">FEATURE</span> M2 — No attachment / image sending (the paperclip &amp; emoji buttons are no-ops)</h3>
+  <span class="loc">ui/screens/chat/components/UserInput.kt:57–59, 99–104</span>
+  <p>Attach and emoji <code>IconButton</code>s have empty <code>onClick</code> bodies (commented “M4”/“M5+”). Sending images is a baseline
+     expectation for a modern messenger.</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-med">FEATURE</span> M3 — No localization / RTL string coverage</h3>
+  <span class="loc">res/values/strings.xml (only <code>app_name</code>)</span>
+  <p>30+ user-facing strings are hard-coded in Kotlin; <code>stringResource</code> is used 0 times. The app can’t be translated and won’t pass a
+     basic i18n bar. (<code>supportsRtl</code> is set, but the literal strings aren’t externalized.)</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">FEATURE</span> M4 — Other expected-but-absent niceties</h3>
+  <p>No tablet/foldable list-detail layout (the <code>material3-adaptive</code> deps are pulled in but unused); no message reactions/forwarding;
+     no per-conversation custom notification sound; no “mark as spam”; no contact/vCard rendering despite <code>Attachment.isContact</code>; no
+     scroll-to-searched-message; no resend-failed action; no empty-DB “import existing messages” progress UI; no widget/quick-tile.</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-crit">QUALITY</span> M5 — Effectively no automated tests</h3>
+  <span class="loc">app/src/test/.../ExampleUnitTest.kt (asserts 2+2=4)</span>
+  <span class="loc">app/src/androidTest/.../ExampleInstrumentedTest.kt (package-name check)</span>
+  <p>All test infrastructure is wired (JUnit, MockK, Turbine, coroutines-test, room-testing, work-testing) but there are no real tests. For a
+     “production” app, the status-mapping, blocking, grouping (<code>ChatGrouping</code>), importer, and send/receive flows urgently need unit
+     coverage — most of the Critical bugs above would have been caught by a handful of tests.</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">QUALITY</span> M6 — No crash/error reporting, logging strategy, or analytics</h3>
+  <p>Errors are swallowed with <code>Log.e</code>; there’s no Crashlytics/Sentry, no user-visible failure surfacing for background paths (failed
+     imports, failed scheduled sends beyond a list status). Fine for a prototype, expected for production.</p>
+</div>
+
+<div class="item">
+  <h3><span class="badge b-low">FEATURE</span> M7 — Phone-number normalization is a placeholder</h3>
+  <span class="loc">data/telephony/SmsInboundHandler.kt:152–156 (digits-only, comment defers “E.164 … in M1.4”)</span>
+  <p>There’s no real E.164 normalization (no <code>libphonenumber</code>). This is the root cause behind B2 (blocking) and contributes to
+     contact-match and thread-merge inconsistencies.</p>
+</div>
+</section>
+
+<!-- ============================ PLAY STORE ============================ -->
+<section id="playstore">
+<h2 class="sec">⑤ Google Play readiness checklist</h2>
+<ul class="chk">
+  <li class="partial"><strong>Default-SMS-app role &amp; restricted SMS permissions</strong> (<code>READ_SMS</code>, <code>SEND_SMS</code>,
+      <code>RECEIVE_SMS/MMS/WAP_PUSH</code>): correctly gated behind being the default app, but they require a <em>Permissions Declaration</em> in
+      Play Console and an approved use case. Plan for review friction. (AndroidManifest.xml:10–14)</li>
+  <li><strong><code>USE_EXACT_ALARM</code> is a policy risk</strong> — Play restricts it to alarm/clock/calendar apps; an SMS app may be rejected.
+      It’s also unused here. Remove it. (AndroidManifest.xml:28) — see B11.</li>
+  <li><strong>Destructive DB migration</strong> will wipe user metadata on the first schema bump — fix before release. (B9)</li>
+  <li><strong>No privacy policy / data-safety mapping evident</strong>; an SMS app must complete the Data Safety form (reads SMS &amp; contacts) and
+      host a privacy policy.</li>
+  <li><strong>Auto Backup of message content</strong> is on with unconfigured rules (B19) — review against the Data Safety declaration.</li>
+  <li class="partial"><strong>Core function correctness</strong>: sent/delivered status (B1), blocking (B2), multi-recipient (B3) and
+      notification tap (B4) are broken — Play’s SMS policy and basic QA expect these to work.</li>
+  <li class="ok"><strong>Release build hygiene</strong>: R8 minify + resource shrink enabled, sensible ProGuard keep rules, no debuggable leak,
+      <code>versionCode</code>/<code>versionName</code> set. (app/build.gradle.kts:29–38)</li>
+  <li class="ok"><strong>Target SDK</strong> is current (36) with min SDK 30 — meets Play target-API requirements.</li>
+  <li><strong>No tests / CI</strong> (M5) — not a Play gate, but a production-readiness gap.</li>
+  <li><strong>No localization</strong> (M3) — limits reach; not a hard gate.</li>
+  <li class="partial"><strong>Accessibility</strong>: most icons have <code>contentDescription</code> (good), but custom <code>BasicTextField</code>
+      input bars and the avatar/initials need a TalkBack pass.</li>
+</ul>
+</section>
+
+<!-- ============================ IMPROVEMENTS ============================ -->
+<section id="improve">
+<h2 class="sec">⑥ Improvements &amp; technical debt (non-bug)</h2>
+<table>
+  <tr><th>Area</th><th>Suggestion</th><th>Where</th></tr>
+  <tr><td>Phone numbers</td><td>Add <code>libphonenumber</code>; normalize to E.164 once at the data boundary and key contacts/blocks/threads on it.</td><td>data/telephony, data/repository</td></tr>
+  <tr><td>Single source of truth</td><td>Status/type is double-sourced (receivers <em>and</em> the importer write it, racing each other). Make the receivers the only writer for outbound, and have the importer skip outbound rows it already owns.</td><td>SmsSender, receivers, TelephonyImporter</td></tr>
+  <tr><td>Pagination</td><td>Chat &amp; conversation lists load all rows into memory; use Paging 3 / <code>LIMIT</code> windows for large mailboxes.</td><td>MessageDao, ChatViewModel</td></tr>
+  <tr><td>N+1 queries</td><td><code>TelephonyImporter.buildConversations</code> and <code>SearchRepository</code> call <code>conversationDao.byId</code> per row; batch with an <code>IN (...)</code> query.</td><td>TelephonyImporter:107, SearchRepositoryImpl</td></tr>
+  <tr><td>Recompute work</td><td><code>ChatViewModel.observeData</code> re-resolves the contact on every message-list emission; cache per address.</td><td>ChatViewModel:121–147</td></tr>
+  <tr><td>BroadcastReceiver scopes</td><td>Each receiver spins up a fresh <code>CoroutineScope(Dispatchers.IO)</code>; inject an app scope to avoid leaking jobs across <code>goAsync</code>.</td><td>framework/receiver/*</td></tr>
+  <tr><td>Hardcoded magic values</td><td>Snippet length 160, import cap 1000, debounce constants are duplicated across files; centralize.</td><td>multiple</td></tr>
+  <tr><td>Error UX</td><td>Surface failed sends/imports to the user (snackbar + retry), not just <code>Log.e</code>.</td><td>repositories, workers</td></tr>
+  <tr><td>Modularization</td><td>The package split is clean enough to become Gradle modules (domain/data/framework/ui) when build times warrant — the README already anticipates this.</td><td>project</td></tr>
+  <tr><td>Strings</td><td>Externalize to <code>strings.xml</code> with plurals (<code>%d selected</code>, “Deleted N conversations” already hand-pluralizes).</td><td>all UI</td></tr>
+  <tr><td>Date pickers</td><td>The schedule dialog mixes UTC (date) and system zone (time) — correct, but add explicit tests; it’s the kind of code that silently regresses.</td><td>ChatScreen ScheduleSendDialog</td></tr>
+</table>
+</section>
+
+<!-- ============================ PRIORITY ============================ -->
+<section id="priority">
+<h2 class="sec">⑦ Suggested fix order</h2>
+<table>
+  <tr><th>#</th><th>Do this first</th><th>Why</th></tr>
+  <tr><td>1</td><td>B9 destructive migration → real migrations</td><td>Release blocker; cheap now, catastrophic later.</td></tr>
+  <tr><td>2</td><td>B2 unify &amp; fix blocking + B-improve E.164 normalization</td><td>Safety feature is dead; also unblocks contact/thread correctness.</td></tr>
+  <tr><td>3</td><td>B3 stop silent multi-recipient drop</td><td>Silent message loss.</td></tr>
+  <tr><td>4</td><td>B1 status mapping</td><td>Most-visible correctness bug; fix with the tests in M5.</td></tr>
+  <tr><td>5</td><td>B4 + B5 intent handling (notif tap, SEND/SENDTO)</td><td>Core navigation/entry points.</td></tr>
+  <tr><td>6</td><td>B6/B7 notifications (history + mute)</td><td>Daily-driver annoyance.</td></tr>
+  <tr><td>7</td><td>M5 add real tests around 1–6</td><td>Lock the fixes in; these bugs are all unit-testable.</td></tr>
+  <tr><td>8</td><td>Play policy: drop <code>USE_EXACT_ALARM</code> (B11), backup rules (B19), data-safety/privacy policy</td><td>Submission gates.</td></tr>
+  <tr><td>9</td><td>B8 default SIM, B10 reply mark-read, B13 deletion sync, B16 saveable nav</td><td>Medium correctness.</td></tr>
+  <tr><td>10</td><td>MMS (M1) &amp; attachments (M2) &amp; localization (M3)</td><td>The big “fully-featured” lifts, do deliberately.</td></tr>
+</table>
+</section>
+
+<footer>
+  <p>Companion: <a href="code-review.html">Code Review &amp; “How everything works”</a>. This document lists defects against a
+     production bar; it is not exhaustive of every micro-nit but covers the items that matter for correctness, safety and shippability.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>
