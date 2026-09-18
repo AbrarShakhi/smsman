@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "SMS man"
+rootProject.name = "smsman"
 include(":app")

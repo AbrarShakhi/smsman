@@ -2,51 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Telephony radio is preferred but not required (so tablets/foldables/ChromeOS can still install
-         in a view-only mode). -->
-    <uses-feature android:name="android.hardware.telephony" android:required="false" />
-
-    <!-- SMS / MMS -->
-    <uses-permission android:name="android.permission.SEND_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_MMS" />
-    <uses-permission android:name="android.permission.RECEIVE_WAP_PUSH" />
-
-    <!-- Contacts -->
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
-
-    <!-- Telephony / Dual-SIM -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
-
-    <!-- Notifications (Android 13+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- Scheduled send -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
-
-    <!-- MMS networking -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <!-- BlockedNumberContract is accessible to the default SMS app without explicit permission. -->
-
-    <queries>
-        <!-- Allow opening external viewers for MMS attachments. -->
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="content" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.DIAL" />
-        </intent>
-    </queries>
-
     <application
-        android:name=".SmsManApplication"
+        android:name=".common.SmsmanApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -54,118 +11,18 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:enableOnBackInvokedCallback="true"
-        android:theme="@style/Theme.SMSMan">
-
+        android:theme="@style/Theme.Smsman">
         <activity
-            android:name=".MainActivity"
+            android:name=".common.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.SMSMan.Splash">
-
+            android:theme="@style/Theme.Smsman"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Compose a message via sms:/smsto:/mms:/mmsto: URI. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SENDTO" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
-            </intent-filter>
-
-            <!-- Share text/image to compose new message. -->
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
-                <data android:mimeType="image/*" />
-                <data android:mimeType="video/*" />
-            </intent-filter>
-
-            <!-- Deep link from notification: smsman://thread/{threadId} -->
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="smsman" android:host="thread" />
-            </intent-filter>
         </activity>
-
-        <!-- Inbound SMS once we are the default SMS app. -->
-        <receiver
-            android:name=".framework.receiver.SmsDeliverReceiver"
-            android:permission="android.permission.BROADCAST_SMS"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.SMS_DELIVER" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Inbound MMS WAP-push notification. -->
-        <receiver
-            android:name=".framework.receiver.MmsWapPushReceiver"
-            android:permission="android.permission.BROADCAST_WAP_PUSH"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
-                <data android:mimeType="application/vnd.wap.mms-message" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Outbound SMS sent-status callback. PendingIntent target — explicit broadcast only. -->
-        <receiver
-            android:name=".framework.receiver.SmsSentStatusReceiver"
-            android:exported="false" />
-
-        <!-- Outbound SMS delivery-receipt callback. PendingIntent target — explicit broadcast only. -->
-        <receiver
-            android:name=".framework.receiver.SmsDeliveredStatusReceiver"
-            android:exported="false" />
-
-        <!-- Notification action receivers (explicit broadcasts via PendingIntent). -->
-        <receiver
-            android:name=".framework.receiver.NotificationReplyReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".framework.receiver.NotificationMarkReadReceiver"
-            android:exported="false" />
-        <receiver
-            android:name=".framework.receiver.NotificationDeleteReceiver"
-            android:exported="false" />
-
-        <!-- Required component for the default-SMS-app role. The OS routes its own
-             quick-reply UI to this service; we just acknowledge. -->
-        <service
-            android:name=".framework.service.RespondViaMessageService"
-            android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="sms" />
-                <data android:scheme="smsto" />
-                <data android:scheme="mms" />
-                <data android:scheme="mmsto" />
-            </intent-filter>
-        </service>
-
-        <!-- Disable WorkManager auto-init so our Configuration.Provider supplies HiltWorkerFactory. -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
-        </provider>
     </application>
 
 </manifest>
