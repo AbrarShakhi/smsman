@@ -157,9 +157,12 @@ Verified end to end on real traffic: a message sent from SIM 2 was stored as SEN
 report parsed to STATUS_COMPLETE, and the received copy persisted by `SmsDeliverReceiver` — i.e.
 inbound messages are not dropped while this app holds the role.
 
+Also implemented: notifications with inline reply, mark-as-read, search across messages and
+contacts, settings (theme, colour scheme, downloadable fonts) persisted with DataStore, message
+selection with bulk pin/delete, conversation delete, and per-bubble SIM attribution.
+
 Not built: MMS. `MmsWapPushReceiver` is deliberately inert, so **incoming MMS is not persisted**
-while this app is default (the test device has 0 MMS rows). `DataStore` is declared but unused.
-There is no notification support yet, no search, and no settings screen beyond a placeholder.
+while this app is default (the test device has 0 MMS rows).
 
 ### Known gaps worth knowing before extending
 
@@ -167,7 +170,7 @@ There is no notification support yet, no search, and no settings screen beyond a
   codec. The test device has 0 MMS rows, so nothing is currently at risk.
 - **The conversation list loads up to 200 threads and a chat up to 500 messages**, with no paging.
 - Favouriting is only reachable from the chat top bar, not from a list long-press.
-- No search, and the settings screen is still a placeholder.
+- Search matches message bodies literally, with no ranking or fuzzy matching.
 - `POST_NOTIFICATIONS` is only runtime-requestable from API 33, so the denial path is invisible on
   the API 31 test device and needs an emulator to exercise.
 
@@ -186,3 +189,16 @@ There is no notification support yet, no search, and no settings screen beyond a
 - Feature code under `features/<name>/`; cross-feature infrastructure under `core/`; app shell under
   `common/`. `common/` must not depend on `features/` except `ScreenChrome.kt`, the one intentional
   inversion point.
+
+### Sharing state between a top bar and its screen
+
+`AppRoot` renders chrome outside the NavEntry's ViewModel store, so a top bar cannot reach a
+navigation-scoped ViewModel. Three different resolutions are in use, and the right one depends on
+the case:
+
+- **Chat title** — resolved independently via `ThreadTitleResolver`; the top bar needs data, not
+  shared mutable state.
+- **Search** — the field lives in the top bar and the results in the screen, so both take an
+  **activity-scoped** ViewModel (`koinActivityViewModel`) to get one instance.
+- **Chat selection** — the contextual bar lives in the *screen*, not the top bar, precisely to avoid
+  the problem.

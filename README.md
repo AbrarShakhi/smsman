@@ -38,6 +38,11 @@ state and per-conversation favourite state. Message content is never mirrored.
 | Favourite conversations | Conversations may be marked as favourites and filtered accordingly. |
 | Notifications | `MessagingStyle` notifications with inline reply and mark-as-read actions. |
 | Read state | Threads are marked read on open and via the notification action. |
+| Search | Queries every message body and the contacts provider, presented as separate sections. |
+| Message selection | Messages may be selected in a thread and pinned, unpinned or deleted in bulk. |
+| Conversation actions | Favourite, mark as read and delete conversation, from the thread overflow menu. |
+| SIM attribution | Each message bubble states which SIM carried it. |
+| Settings | Theme mode, thirteen colour schemes and twelve font families, persisted with DataStore. |
 | Theming | Material 3 Expressive with dynamic colour, and light and dark schemes. |
 
 ### Navigation structure
@@ -81,6 +86,8 @@ The Gradle daemon toolchain is pinned in `mise.toml`.
 | Room | 2.8.5 | Local metadata persistence |
 | KSP | 2.3.10 | Annotation processing for Room |
 | kotlinx.serialization | 1.11.0 | Back stack persistence |
+| DataStore Preferences | 1.2.1 | Settings persistence |
+| Compose UI Text Google Fonts | via BOM | Downloadable font families |
 
 Dependency coordinates and versions are declared exclusively in `gradle/libs.versions.toml`.
 
@@ -230,12 +237,13 @@ The following are known and intentional omissions in the present revision.
   are not rendered.
 - **Contact photographs are not displayed.** Avatars present an initial, or a generic glyph where
   the address is not a saved contact.
-- **Results are not paginated.** The conversation list is limited to 200 threads and a message
-  thread to 500 messages.
-- **Search is not implemented.**
-- **The settings screen is a placeholder.**
+- **Results are not paginated.** The conversation list is limited to 200 threads, a message thread
+  to 500 messages, and search to 200 matches.
+- **Search matches message bodies literally.** There is no ranking, stemming or fuzzy matching.
 - Conversations may be marked as favourites only from the message thread, not from the conversation
   list.
+- Fonts other than the system default require the Play Services font provider and network access on
+  first use; they fall back to the system font otherwise.
 - No backup or export facility is provided.
 
 ---
