@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
@@ -77,8 +81,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Internal only: targets of the sent/delivered PendingIntents. Not exported, since
-             nothing outside the app should be able to fake a send result. -->
         <receiver
             android:name=".core.telephony.receiver.SmsSentReceiver"
             android:exported="false" />
@@ -86,7 +88,6 @@
             android:name=".core.telephony.receiver.SmsDeliveredReceiver"
             android:exported="false" />
 
-        <!-- Notification actions. Not exported: only our own PendingIntents target these. -->
         <receiver
             android:name=".core.notification.NotificationReplyReceiver"
             android:exported="false" />
