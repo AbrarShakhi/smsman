@@ -5,6 +5,10 @@ import com.abrarshakhi.smsman.core.database.SmsmanDatabase
 import com.abrarshakhi.smsman.core.permissions.SmsRoleManager
 import com.abrarshakhi.smsman.core.repository.ConversationRepository
 import com.abrarshakhi.smsman.core.repository.MessageMetadataRepository
+import com.abrarshakhi.smsman.core.repository.MessageRepository
+import com.abrarshakhi.smsman.core.repository.ThreadTitleResolver
+import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
+import com.abrarshakhi.smsman.core.telephony.SimDataSource
 import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import com.abrarshakhi.smsman.core.telephony.ConversationsDataSource
 import com.abrarshakhi.smsman.core.telephony.TelephonyChangeObserver
@@ -28,4 +32,9 @@ val coreModule = module {
     single { ContactsDataSource(androidContext()) }
     single { TelephonyChangeObserver(androidContext()) }
     single { ConversationRepository(get(), get(), get(), get(), Dispatchers.IO) }
+
+    single { MessagesDataSource(androidContext()) }
+    single { SimDataSource(androidContext()) }
+    single { MessageRepository(get(), get(), get(), get(), Dispatchers.IO) }
+    single { ThreadTitleResolver(get(), get(), Dispatchers.IO) }
 }

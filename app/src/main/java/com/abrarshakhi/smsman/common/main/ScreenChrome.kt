@@ -32,7 +32,7 @@ fun AppRouteKey.chrome() = when (this) {
     is AppRouteKey.AllMessages -> allMessagesChrome()
     is AppRouteKey.Favorite -> favoriteChrome()
     is AppRouteKey.Pinned -> pinnedChrome()
-    is AppRouteKey.Chat -> chatChrome()
+    is AppRouteKey.Chat -> chatChrome(threadId)
     is AppRouteKey.NewMessage -> newMessageChrome()
     is AppRouteKey.Settings -> settingsChrome()
 }

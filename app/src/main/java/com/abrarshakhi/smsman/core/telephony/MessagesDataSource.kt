@@ -1,0 +1,96 @@
+package com.abrarshakhi.smsman.core.telephony
+
+import android.content.Context
+import android.provider.BaseColumns
+import android.provider.Telephony
+import android.telephony.SubscriptionManager
+import android.util.Log
+import com.abrarshakhi.smsman.core.model.DeliveryStatus
+import com.abrarshakhi.smsman.core.model.Message
+import com.abrarshakhi.smsman.core.model.MessageType
+
+private const val TAG = "MessagesDataSource"
+
+class MessagesDataSource(private val context: Context) {
+
+    private val resolver get() = context.contentResolver
+
+    /**
+     * Newest [limit] messages in a thread, returned oldest-first for display.
+     *
+     * The provider is queried DESC with the limit in the sort order (the only way to limit a legacy
+     * provider) so the *newest* window is taken, then reversed.
+     */
+    fun loadMessages(threadId: Long, limit: Int = 500): List<Message> {
+        val projection = arrayOf(
+            BaseColumns._ID,
+            Telephony.Sms.THREAD_ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.DATE_SENT,
+            Telephony.Sms.READ,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.SUBSCRIPTION_ID,
+        )
+        return try {
+            resolver.query(
+                Telephony.Sms.CONTENT_URI,
+                projection,
+                "${Telephony.Sms.THREAD_ID} = ?",
+                arrayOf(threadId.toString()),
+                "${Telephony.Sms.DATE} DESC LIMIT $limit",
+            )?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        add(
+                            Message(
+                                id = cursor.longOr(BaseColumns._ID),
+                                threadId = cursor.longOr(Telephony.Sms.THREAD_ID, threadId),
+                                address = cursor.stringOrNull(Telephony.Sms.ADDRESS),
+                                body = cursor.stringOrNull(Telephony.Sms.BODY).orEmpty(),
+                                date = cursor.longOr(Telephony.Sms.DATE),
+                                dateSent = cursor.longOr(Telephony.Sms.DATE_SENT),
+                                isRead = cursor.intOr(Telephony.Sms.READ) != 0,
+                                type = MessageType.fromProvider(cursor.intOr(Telephony.Sms.TYPE)),
+                                status = DeliveryStatus.fromProvider(
+                                    cursor.intOr(Telephony.Sms.STATUS, -1),
+                                ),
+                                subscriptionId = cursor.intOr(
+                                    Telephony.Sms.SUBSCRIPTION_ID,
+                                    SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+                                ),
+                            ),
+                        )
+                    }
+                }.asReversed()
+            }.orEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "Message query failed for thread $threadId", e)
+            emptyList()
+        }
+    }
+
+    /** Distinct addresses seen in a thread; used to title the chat without a canonical-address hop. */
+    fun threadAddresses(threadId: Long, limit: Int = 50): List<String> = try {
+        resolver.query(
+            Telephony.Sms.CONTENT_URI,
+            arrayOf(Telephony.Sms.ADDRESS),
+            "${Telephony.Sms.THREAD_ID} = ?",
+            arrayOf(threadId.toString()),
+            "${Telephony.Sms.DATE} DESC LIMIT $limit",
+        )?.use { cursor ->
+            buildSet {
+                while (cursor.moveToNext()) {
+                    cursor.stringOrNull(Telephony.Sms.ADDRESS)
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { add(it) }
+                }
+            }.toList()
+        }.orEmpty()
+    } catch (e: Exception) {
+        Log.e(TAG, "Address query failed for thread $threadId", e)
+        emptyList()
+    }
+}

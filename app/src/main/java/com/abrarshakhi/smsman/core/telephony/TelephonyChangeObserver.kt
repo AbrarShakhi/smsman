@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.ContactsContract
-import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -29,6 +29,7 @@ class TelephonyChangeObserver(private val context: Context) {
      * This is only a freshness signal for a visible UI — it dies with the process. Correctness when
      * the app is not running comes from SmsDeliverReceiver.
      */
+    @OptIn(FlowPreview::class)
     fun changes(): Flow<Unit> = callbackFlow {
         val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
