@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.androidx.room)
 }
 
 dependencies {
@@ -30,6 +31,10 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.serialization.core)
@@ -62,4 +67,9 @@ android {
 
 kotlin {
     compilerOptions { jvmTarget = JvmTarget.JVM_17 }
+}
+
+room {
+    // Exported schemas are what make future migrations reviewable and testable.
+    schemaDirectory("$projectDir/schemas")
 }
