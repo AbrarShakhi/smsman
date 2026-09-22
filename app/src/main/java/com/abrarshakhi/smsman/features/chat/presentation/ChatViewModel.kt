@@ -3,8 +3,14 @@ package com.abrarshakhi.smsman.features.chat.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abrarshakhi.smsman.core.model.Message
+import android.telephony.SubscriptionManager
 import com.abrarshakhi.smsman.core.model.SimInfo
 import com.abrarshakhi.smsman.core.repository.MessageRepository
+import com.abrarshakhi.smsman.core.telephony.SegmentInfo
+import com.abrarshakhi.smsman.core.telephony.SmsSender
+import com.abrarshakhi.smsman.core.telephony.segmentInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,13 +33,25 @@ data class ChatState(
     val sims: List<SimInfo> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null,
+    val recipient: String? = null,
+    val draft: String = "",
+    val selectedSubscriptionId: Int = SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+    val sendError: String? = null,
 ) {
     /** Only worth showing a SIM indicator when more than one SIM is actually present. */
     val isMultiSim: Boolean get() = sims.size > 1
+
+    val segments: SegmentInfo get() = segmentInfo(draft)
+
+    val canSend: Boolean get() = draft.isNotBlank() && !recipient.isNullOrBlank()
+
+    val selectedSim: SimInfo?
+        get() = sims.firstOrNull { it.subscriptionId == selectedSubscriptionId }
 }
 
 class ChatViewModel(
     private val repository: MessageRepository,
+    private val sender: SmsSender,
     private val threadId: Long,
 ) : ViewModel() {
 
@@ -50,10 +68,23 @@ class ChatViewModel(
                     )
                 }
                 .collect { thread ->
-                    _state.value = ChatState(
+                    val previous = _state.value
+                    // A removed SIM must not stay selected; fall back to the thread's own SIM.
+                    val selected = thread.sims
+                        .map { it.subscriptionId }
+                        .firstOrNull { it == previous.selectedSubscriptionId }
+                        ?: thread.messages.lastOrNull { it.subscriptionId in thread.sims.map(SimInfo::subscriptionId) }
+                            ?.subscriptionId
+                        ?: thread.sims.firstOrNull()?.subscriptionId
+                        ?: SubscriptionManager.INVALID_SUBSCRIPTION_ID
+
+                    _state.value = previous.copy(
                         items = buildItems(thread.messages),
                         sims = thread.sims,
                         isLoading = false,
+                        error = null,
+                        recipient = thread.messages.lastOrNull { !it.address.isNullOrBlank() }?.address,
+                        selectedSubscriptionId = selected,
                     )
                 }
         }
@@ -87,6 +118,34 @@ class ChatViewModel(
                 if (older == null || !sameDay(older.message.date, row.message.date)) {
                     add(ChatItem.DayDivider(row.message.date))
                 }
+            }
+        }
+    }
+
+    fun onDraftChange(text: String) {
+        _state.value = _state.value.copy(draft = text, sendError = null)
+    }
+
+    fun onSimSelected(subscriptionId: Int) {
+        _state.value = _state.value.copy(selectedSubscriptionId = subscriptionId)
+    }
+
+    fun onSend() {
+        val current = _state.value
+        val recipient = current.recipient
+        if (!current.canSend || recipient == null) return
+
+        // Clear optimistically: the inserted OUTBOX row arrives back through the content observer.
+        _state.value = current.copy(draft = "", sendError = null)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                sender.send(recipient, current.draft, current.selectedSubscriptionId)
+            }
+            result.onFailure { throwable ->
+                _state.value = _state.value.copy(
+                    draft = current.draft,
+                    sendError = throwable.message ?: "Could not send",
+                )
             }
         }
     }

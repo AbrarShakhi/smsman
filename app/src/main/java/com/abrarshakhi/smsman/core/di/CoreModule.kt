@@ -9,6 +9,7 @@ import com.abrarshakhi.smsman.core.repository.MessageRepository
 import com.abrarshakhi.smsman.core.repository.ThreadTitleResolver
 import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.SimDataSource
+import com.abrarshakhi.smsman.core.telephony.SmsSender
 import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import com.abrarshakhi.smsman.core.telephony.ConversationsDataSource
 import com.abrarshakhi.smsman.core.telephony.TelephonyChangeObserver
@@ -37,4 +38,5 @@ val coreModule = module {
     single { SimDataSource(androidContext()) }
     single { MessageRepository(get(), get(), get(), get(), Dispatchers.IO) }
     single { ThreadTitleResolver(get(), get(), Dispatchers.IO) }
+    single { SmsSender(androidContext()) }
 }

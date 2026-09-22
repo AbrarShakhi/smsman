@@ -77,6 +77,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- Internal only: targets of the sent/delivered PendingIntents. Not exported, since
+             nothing outside the app should be able to fake a send result. -->
+        <receiver
+            android:name=".core.telephony.receiver.SmsSentReceiver"
+            android:exported="false" />
+        <receiver
+            android:name=".core.telephony.receiver.SmsDeliveredReceiver"
+            android:exported="false" />
+
         <!-- Component 4 of 4: quick-reply to a declined call. -->
         <service
             android:name=".core.telephony.service.RespondViaMessageService"

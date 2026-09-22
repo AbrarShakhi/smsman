@@ -1,7 +1,6 @@
 package com.abrarshakhi.smsman.features.chat.presentation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -43,6 +50,7 @@ import com.abrarshakhi.smsman.core.model.DeliveryStatus
 import com.abrarshakhi.smsman.core.model.Message
 import com.abrarshakhi.smsman.core.model.MessageType
 import com.abrarshakhi.smsman.core.model.SimInfo
+import com.abrarshakhi.smsman.core.telephony.SegmentInfo
 import java.text.DateFormat
 import java.util.Date
 
@@ -74,7 +82,25 @@ fun ChatScreen(viewModel: ChatViewModel, modifier: Modifier = Modifier) {
                 }
             }
 
-            ComposeBarPlaceholder()
+            state.sendError?.let { error ->
+                Text(
+                    text = error,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+            ComposeBar(
+                draft = state.draft,
+                canSend = state.canSend,
+                segments = state.segments,
+                sims = state.sims,
+                selectedSim = state.selectedSim,
+                isMultiSim = state.isMultiSim,
+                onDraftChange = viewModel::onDraftChange,
+                onSimSelected = viewModel::onSimSelected,
+                onSend = viewModel::onSend,
+            )
         }
     }
 }
@@ -229,42 +255,80 @@ private fun statusLabel(message: Message): String? = when {
     else -> "Sent"
 }
 
-/** Visual placeholder; wiring send is the next milestone. */
 @Composable
-private fun ComposeBarPlaceholder() {
+private fun ComposeBar(
+    draft: String,
+    canSend: Boolean,
+    segments: SegmentInfo,
+    sims: List<SimInfo>,
+    selectedSim: SimInfo?,
+    isMultiSim: Boolean,
+    onDraftChange: (String) -> Unit,
+    onSimSelected: (Int) -> Unit,
+    onSend: () -> Unit,
+) {
+    var simMenuOpen by remember { mutableStateOf(false) }
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier.fillMaxWidth().imePadding(),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Surface(
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                modifier = Modifier.weight(1f),
-            ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+            // Only surfaced once it matters: a second segment costs another message.
+            if (segments.segments > 1) {
                 Text(
-                    text = "Sending is not wired up yet",
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = "${segments.segments} messages · ${segments.remainingInSegment} left" +
+                        if (segments.isUnicode) " · Unicode" else "",
+                    modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(22.dp)),
-                contentAlignment = Alignment.Center,
+
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tab_messages),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                if (isMultiSim) {
+                    Box {
+                        AssistChip(
+                            onClick = { simMenuOpen = true },
+                            label = { Text(selectedSim?.let { "SIM ${it.slotIndex + 1}" } ?: "SIM") },
+                            modifier = Modifier.padding(bottom = 4.dp),
+                        )
+                        DropdownMenu(
+                            expanded = simMenuOpen,
+                            onDismissRequest = { simMenuOpen = false },
+                        ) {
+                            sims.forEach { sim ->
+                                DropdownMenuItem(
+                                    text = { Text("SIM ${sim.slotIndex + 1} · ${sim.label}") },
+                                    onClick = {
+                                        onSimSelected(sim.subscriptionId)
+                                        simMenuOpen = false
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = draft,
+                    onValueChange = onDraftChange,
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Text message") },
+                    shape = RoundedCornerShape(24.dp),
+                    maxLines = 5,
                 )
+
+                FilledIconButton(
+                    onClick = onSend,
+                    enabled = canSend,
+                    modifier = Modifier.padding(bottom = 4.dp),
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
+                }
             }
         }
     }
