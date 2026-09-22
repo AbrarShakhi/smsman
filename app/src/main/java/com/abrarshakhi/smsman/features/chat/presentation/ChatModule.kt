@@ -10,13 +10,14 @@ import org.koin.dsl.navigation3.navigation
 
 @OptIn(KoinExperimentalAPI::class)
 val chatModule = module {
-    viewModel { (threadId: Long) -> ChatViewModel(get(), get(), threadId) }
+    viewModel { (threadId: Long) -> ChatViewModel(get(), get(), get(), threadId) }
 
     navigation<AppRouteKey.Chat> { route ->
         ChatScreen(
             viewModel = koinViewModel(key = "chat-${route.threadId}") {
                 parametersOf(route.threadId)
             },
+            highlightMessageId = route.highlightMessageId,
         )
     }
 }

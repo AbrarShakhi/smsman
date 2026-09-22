@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.abrarshakhi.smsman.core.model.Message
 import android.telephony.SubscriptionManager
 import com.abrarshakhi.smsman.core.model.SimInfo
+import com.abrarshakhi.smsman.core.repository.MessageMetadataRepository
 import com.abrarshakhi.smsman.core.repository.MessageRepository
 import com.abrarshakhi.smsman.core.telephony.SegmentInfo
 import com.abrarshakhi.smsman.core.telephony.SmsSender
@@ -51,6 +52,7 @@ data class ChatState(
 
 class ChatViewModel(
     private val repository: MessageRepository,
+    private val metadata: MessageMetadataRepository,
     private val sender: SmsSender,
     private val threadId: Long,
 ) : ViewModel() {
@@ -118,6 +120,22 @@ class ChatViewModel(
                 if (older == null || !sameDay(older.message.date, row.message.date)) {
                     add(ChatItem.DayDivider(row.message.date))
                 }
+            }
+        }
+    }
+
+    fun onTogglePin(message: Message) {
+        viewModelScope.launch {
+            if (message.isPinned) {
+                metadata.unpin(message.id)
+            } else {
+                metadata.pin(
+                    messageId = message.id,
+                    threadId = message.threadId,
+                    date = message.date,
+                    type = message.type.ordinal,
+                    body = message.body,
+                )
             }
         }
     }

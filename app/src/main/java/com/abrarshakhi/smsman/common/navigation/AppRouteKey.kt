@@ -24,6 +24,8 @@ sealed interface AppRouteKey : NavKey {
     @Serializable
     data class Chat(
         val threadId: Long,
+        /** Set when arriving from the Pinned tab, so the thread can scroll to that message. */
+        val highlightMessageId: Long? = null,
     ) : AppRouteKey
 
     @Serializable

@@ -72,6 +72,65 @@ class MessagesDataSource(private val context: Context) {
         }
     }
 
+    /**
+     * Resolves specific message ids, for the Pinned tab. Ids that no longer exist are simply
+     * absent from the result — another SMS app can delete a message we hold a pin for — so callers
+     * must diff against what they asked for and prune.
+     */
+    fun loadMessagesByIds(ids: List<Long>): List<Message> {
+        if (ids.isEmpty()) return emptyList()
+        val projection = arrayOf(
+            BaseColumns._ID,
+            Telephony.Sms.THREAD_ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.DATE_SENT,
+            Telephony.Sms.READ,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.SUBSCRIPTION_ID,
+        )
+        val placeholders = ids.joinToString(",") { "?" }
+        return try {
+            resolver.query(
+                Telephony.Sms.CONTENT_URI,
+                projection,
+                "${BaseColumns._ID} IN ($placeholders)",
+                ids.map(Long::toString).toTypedArray(),
+                null,
+            )?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        add(
+                            Message(
+                                id = cursor.longOr(BaseColumns._ID),
+                                threadId = cursor.longOr(Telephony.Sms.THREAD_ID),
+                                address = cursor.stringOrNull(Telephony.Sms.ADDRESS),
+                                body = cursor.stringOrNull(Telephony.Sms.BODY).orEmpty(),
+                                date = cursor.longOr(Telephony.Sms.DATE),
+                                dateSent = cursor.longOr(Telephony.Sms.DATE_SENT),
+                                isRead = cursor.intOr(Telephony.Sms.READ) != 0,
+                                type = MessageType.fromProvider(cursor.intOr(Telephony.Sms.TYPE)),
+                                status = DeliveryStatus.fromProvider(
+                                    cursor.intOr(Telephony.Sms.STATUS, -1),
+                                ),
+                                subscriptionId = cursor.intOr(
+                                    Telephony.Sms.SUBSCRIPTION_ID,
+                                    SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+                                ),
+                                isPinned = true,
+                            ),
+                        )
+                    }
+                }
+            }.orEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "Pinned message lookup failed", e)
+            emptyList()
+        }
+    }
+
     /** Distinct addresses seen in a thread; used to title the chat without a canonical-address hop. */
     fun threadAddresses(threadId: Long, limit: Int = 50): List<String> = try {
         resolver.query(

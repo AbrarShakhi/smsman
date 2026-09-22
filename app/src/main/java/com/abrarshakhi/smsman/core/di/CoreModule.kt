@@ -6,6 +6,7 @@ import com.abrarshakhi.smsman.core.permissions.SmsRoleManager
 import com.abrarshakhi.smsman.core.repository.ConversationRepository
 import com.abrarshakhi.smsman.core.repository.MessageMetadataRepository
 import com.abrarshakhi.smsman.core.repository.MessageRepository
+import com.abrarshakhi.smsman.core.repository.PinnedRepository
 import com.abrarshakhi.smsman.core.repository.ThreadTitleResolver
 import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.SimDataSource
@@ -39,4 +40,5 @@ val coreModule = module {
     single { MessageRepository(get(), get(), get(), get(), Dispatchers.IO) }
     single { ThreadTitleResolver(get(), get(), Dispatchers.IO) }
     single { SmsSender(androidContext()) }
+    single { PinnedRepository(get(), get(), get(), get(), Dispatchers.IO) }
 }

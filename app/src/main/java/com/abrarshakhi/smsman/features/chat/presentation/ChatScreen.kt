@@ -1,7 +1,8 @@
 package com.abrarshakhi.smsman.features.chat.presentation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -23,10 +26,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,8 +41,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,7 +59,11 @@ import java.text.DateFormat
 import java.util.Date
 
 @Composable
-fun ChatScreen(viewModel: ChatViewModel, modifier: Modifier = Modifier) {
+fun ChatScreen(
+    viewModel: ChatViewModel,
+    highlightMessageId: Long? = null,
+    modifier: Modifier = Modifier,
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when {
@@ -69,16 +78,35 @@ fun ChatScreen(viewModel: ChatViewModel, modifier: Modifier = Modifier) {
         else -> Column(modifier.fillMaxSize()) {
             // Expanded detail is per-message and deliberately survives rotation.
             var expandedId by rememberSaveable { mutableLongStateOf(-1L) }
+            val listState = rememberLazyListState()
+
+            // Arriving from the Pinned tab: jump to the pinned message and open its details.
+            LaunchedEffect(highlightMessageId, state.items) {
+                if (highlightMessageId == null) return@LaunchedEffect
+                val index = state.items.indexOfFirst {
+                    it is ChatItem.MessageRow && it.message.id == highlightMessageId
+                }
+                if (index >= 0) {
+                    listState.scrollToItem(index)
+                    expandedId = highlightMessageId
+                }
+            }
 
             LazyColumn(
+                state = listState,
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 // Newest-first data + reverseLayout opens the thread at the latest message.
                 reverseLayout = true,
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                items(state.items, expandedId, state.isMultiSim, state.sims) { id ->
-                    expandedId = if (expandedId == id) -1L else id
-                }
+                items(
+                    items = state.items,
+                    expandedId = expandedId,
+                    isMultiSim = state.isMultiSim,
+                    sims = state.sims,
+                    onToggle = { id -> expandedId = if (expandedId == id) -1L else id },
+                    onTogglePin = viewModel::onTogglePin,
+                )
             }
 
             state.sendError?.let { error ->
@@ -110,6 +138,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
     isMultiSim: Boolean,
     sims: List<SimInfo>,
     onToggle: (Long) -> Unit,
+    onTogglePin: (Message) -> Unit,
 ) {
     items.forEach { item ->
         when (item) {
@@ -124,6 +153,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
                     isMultiSim = isMultiSim,
                     sims = sims,
                     onClick = { onToggle(item.message.id) },
+                    onTogglePin = { onTogglePin(item.message) },
                 )
             }
         }
@@ -149,14 +179,18 @@ private fun DayDivider(timestamp: Long) {
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun MessageBubble(
     row: ChatItem.MessageRow,
     isExpanded: Boolean,
     isMultiSim: Boolean,
     sims: List<SimInfo>,
     onClick: () -> Unit,
+    onTogglePin: () -> Unit,
 ) {
     val message = row.message
+    val clipboard = LocalClipboardManager.current
+    var menuOpen by remember { mutableStateOf(false) }
     val outgoing = message.isOutgoing
     val corner = 18.dp
     val tail = 4.dp
@@ -198,7 +232,10 @@ private fun MessageBubble(
                 },
                 modifier = Modifier
                     .widthIn(max = 280.dp)
-                    .clickable(onClick = onClick),
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = { menuOpen = true },
+                    ),
             ) {
                 Text(
                     text = message.body,
@@ -208,6 +245,23 @@ private fun MessageBubble(
                         MaterialTheme.colorScheme.onPrimary
                     } else {
                         MaterialTheme.colorScheme.onSurface
+                    },
+                )
+            }
+
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(if (message.isPinned) "Unpin" else "Pin") },
+                    onClick = {
+                        onTogglePin()
+                        menuOpen = false
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Copy") },
+                    onClick = {
+                        clipboard.setText(AnnotatedString(message.body))
+                        menuOpen = false
                     },
                 )
             }
