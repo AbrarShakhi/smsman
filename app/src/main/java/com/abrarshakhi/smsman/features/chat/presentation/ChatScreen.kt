@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -271,7 +270,10 @@ private fun ComposeBar(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth().imePadding(),
+        // No imePadding() here: AppRoot's Scaffold uses WindowInsets.safeDrawing, which
+        // already includes the IME inset, so adding it again lifted the bar by twice the
+        // keyboard height.
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
             // Only surfaced once it matters: a second segment costs another message.
