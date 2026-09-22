@@ -37,6 +37,8 @@ data class ChatState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val recipient: String? = null,
+    val selectedIds: Set<Long> = emptySet(),
+    val isFavorite: Boolean = false,
     val draft: String = "",
     val selectedSubscriptionId: Int = SubscriptionManager.INVALID_SUBSCRIPTION_ID,
     val sendError: String? = null,
@@ -50,6 +52,17 @@ data class ChatState(
 
     val selectedSim: SimInfo?
         get() = sims.firstOrNull { it.subscriptionId == selectedSubscriptionId }
+
+    val inSelectionMode: Boolean get() = selectedIds.isNotEmpty()
+
+    /** Messages currently selected, in display order. */
+    fun selectedMessages(): List<Message> = items
+        .filterIsInstance<ChatItem.MessageRow>()
+        .map { it.message }
+        .filter { it.id in selectedIds }
+
+    /** Offer "Pin" unless every selected message is already pinned. */
+    val selectionPinAction: Boolean get() = selectedMessages().any { !it.isPinned }
 }
 
 class ChatViewModel(
@@ -65,6 +78,12 @@ class ChatViewModel(
     val state: StateFlow<ChatState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            metadata.observeFavoriteThreadIds().collect { favorites ->
+                _state.value = _state.value.copy(isFavorite = threadId in favorites)
+            }
+        }
+
         // Opening a conversation is the user reading it: clear unread state and drop its
         // notification. Scoped to unread rows, so it is a no-op when there is nothing to clear.
         viewModelScope.launch {
@@ -91,7 +110,9 @@ class ChatViewModel(
                         ?: thread.sims.firstOrNull()?.subscriptionId
                         ?: SubscriptionManager.INVALID_SUBSCRIPTION_ID
 
+                    val present = thread.messages.mapTo(mutableSetOf()) { it.id }
                     _state.value = previous.copy(
+                        selectedIds = previous.selectedIds intersect present,
                         items = buildItems(thread.messages),
                         sims = thread.sims,
                         isLoading = false,
@@ -148,6 +169,71 @@ class ChatViewModel(
                     body = message.body,
                 )
             }
+        }
+    }
+
+    fun onToggleSelection(message: Message) {
+        val current = _state.value.selectedIds
+        _state.value = _state.value.copy(
+            selectedIds = if (message.id in current) current - message.id else current + message.id,
+        )
+    }
+
+    fun onClearSelection() {
+        _state.value = _state.value.copy(selectedIds = emptySet())
+    }
+
+    fun onPinSelected() {
+        val selected = _state.value.selectedMessages()
+        val shouldPin = _state.value.selectionPinAction
+        viewModelScope.launch {
+            selected.forEach { message ->
+                if (shouldPin && !message.isPinned) {
+                    metadata.pin(
+                        messageId = message.id,
+                        threadId = message.threadId,
+                        date = message.date,
+                        type = message.type.ordinal,
+                        body = message.body,
+                    )
+                } else if (!shouldPin && message.isPinned) {
+                    metadata.unpin(message.id)
+                }
+            }
+            onClearSelection()
+        }
+    }
+
+    fun onDeleteSelected() {
+        val ids = _state.value.selectedIds
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { messages.deleteMessages(ids) }
+            // Pins pointing at deleted rows would otherwise dangle until the next prune.
+            metadata.prunePins(ids.toList())
+            onClearSelection()
+        }
+    }
+
+    fun onToggleFavorite() {
+        val next = !_state.value.isFavorite
+        viewModelScope.launch { metadata.setFavorite(threadId, next) }
+    }
+
+    fun onMarkRead() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { messages.markThreadRead(threadId) }
+            notifier.cancel(threadId)
+        }
+    }
+
+    /** Deletes the whole conversation; [onDeleted] lets the caller leave the now-empty screen. */
+    fun onDeleteConversation(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { messages.deleteThread(threadId) }
+            metadata.forgetThread(threadId)
+            notifier.cancel(threadId)
+            onDeleted()
         }
     }
 

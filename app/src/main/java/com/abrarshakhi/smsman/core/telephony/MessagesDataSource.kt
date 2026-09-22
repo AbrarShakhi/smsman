@@ -1,5 +1,6 @@
 package com.abrarshakhi.smsman.core.telephony
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.provider.BaseColumns
@@ -213,6 +214,36 @@ class MessagesDataSource(private val context: Context) {
             Log.e(TAG, "Message search failed", e)
             emptyList()
         }
+    }
+
+    /**
+     * Deletes individual messages. Only the default SMS app may delete from the provider.
+     * Returns the number of rows actually removed.
+     */
+    fun deleteMessages(ids: Collection<Long>): Int = try {
+        ids.sumOf { id ->
+            resolver.delete(
+                ContentUris.withAppendedId(Telephony.Sms.CONTENT_URI, id), null, null,
+            )
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Message deletion failed", e)
+        0
+    }
+
+    /**
+     * Deletes every message in a thread. The provider removes the thread row itself once it is
+     * empty, so no separate thread delete is needed.
+     */
+    fun deleteThread(threadId: Long): Int = try {
+        resolver.delete(
+            Telephony.Sms.CONTENT_URI,
+            "${Telephony.Sms.THREAD_ID} = ?",
+            arrayOf(threadId.toString()),
+        )
+    } catch (e: Exception) {
+        Log.e(TAG, "Thread deletion failed for $threadId", e)
+        0
     }
 
     /** Distinct addresses seen in a thread; used to title the chat without a canonical-address hop. */

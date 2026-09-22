@@ -6,6 +6,7 @@ import com.abrarshakhi.smsman.core.database.dao.MessageMetaDao
 import com.abrarshakhi.smsman.core.database.entity.ConversationMetaEntity
 import com.abrarshakhi.smsman.core.database.entity.MessageMetaEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 /**
@@ -49,6 +50,12 @@ class MessageMetadataRepository(
     }
 
     suspend fun unpin(messageId: Long) = messageMetaDao.unpin(messageId)
+
+    /** Clears metadata for a conversation that no longer exists. */
+    suspend fun forgetThread(threadId: Long) {
+        conversationMetaDao.delete(threadId)
+        messageMetaDao.prune(messageMetaDao.observePinnedIdsInThread(threadId).first())
+    }
 
     /** Called with the pinned ids that the provider no longer returns. */
     suspend fun prunePins(missingMessageIds: List<Long>) {

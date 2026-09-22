@@ -21,7 +21,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -40,11 +46,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,6 +81,16 @@ fun ChatScreen(
         }
 
         else -> Column(modifier.fillMaxSize()) {
+            if (state.inSelectionMode) {
+                SelectionBar(
+                    count = state.selectedIds.size,
+                    pinAction = state.selectionPinAction,
+                    onPin = viewModel::onPinSelected,
+                    onDelete = viewModel::onDeleteSelected,
+                    onClose = viewModel::onClearSelection,
+                )
+            }
+
             // Expanded detail is per-message and deliberately survives rotation.
             var expandedId by rememberSaveable { mutableLongStateOf(-1L) }
             val listState = rememberLazyListState()
@@ -104,8 +119,10 @@ fun ChatScreen(
                     expandedId = expandedId,
                     isMultiSim = state.isMultiSim,
                     sims = state.sims,
+                    selectedIds = state.selectedIds,
+                    inSelectionMode = state.inSelectionMode,
                     onToggle = { id -> expandedId = if (expandedId == id) -1L else id },
-                    onTogglePin = viewModel::onTogglePin,
+                    onToggleSelection = viewModel::onToggleSelection,
                 )
             }
 
@@ -137,8 +154,10 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
     expandedId: Long,
     isMultiSim: Boolean,
     sims: List<SimInfo>,
+    selectedIds: Set<Long>,
+    inSelectionMode: Boolean,
     onToggle: (Long) -> Unit,
-    onTogglePin: (Message) -> Unit,
+    onToggleSelection: (Message) -> Unit,
 ) {
     items.forEach { item ->
         when (item) {
@@ -152,8 +171,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
                     isExpanded = expandedId == item.message.id,
                     isMultiSim = isMultiSim,
                     sims = sims,
-                    onClick = { onToggle(item.message.id) },
-                    onTogglePin = { onTogglePin(item.message) },
+                    isSelected = item.message.id in selectedIds,
+                    // Once selection is active a plain tap extends it, as in Messages.
+                    onClick = {
+                        if (inSelectionMode) onToggleSelection(item.message)
+                        else onToggle(item.message.id)
+                    },
+                    onLongClick = { onToggleSelection(item.message) },
                 )
             }
         }
@@ -185,12 +209,11 @@ private fun MessageBubble(
     isExpanded: Boolean,
     isMultiSim: Boolean,
     sims: List<SimInfo>,
+    isSelected: Boolean,
     onClick: () -> Unit,
-    onTogglePin: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val message = row.message
-    val clipboard = LocalClipboardManager.current
-    var menuOpen by remember { mutableStateOf(false) }
     val outgoing = message.isOutgoing
     val corner = 18.dp
     val tail = 4.dp
@@ -205,6 +228,10 @@ private fun MessageBubble(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                else Color.Transparent,
+            )
             .padding(
                 start = 16.dp,
                 end = 16.dp,
@@ -232,10 +259,7 @@ private fun MessageBubble(
                 },
                 modifier = Modifier
                     .widthIn(max = 280.dp)
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = { menuOpen = true },
-                    ),
+                    .combinedClickable(onClick = onClick, onLongClick = onLongClick),
             ) {
                 Text(
                     text = message.body,
@@ -249,22 +273,17 @@ private fun MessageBubble(
                 )
             }
 
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text(if (message.isPinned) "Unpin" else "Pin") },
-                    onClick = {
-                        onTogglePin()
-                        menuOpen = false
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Copy") },
-                    onClick = {
-                        clipboard.setText(AnnotatedString(message.body))
-                        menuOpen = false
-                    },
-                )
-            }
+        }
+
+        // Which SIM carried this message, shown once per visual group to avoid repetition.
+        if (isMultiSim && row.isLastInGroup) {
+            val sim = sims.firstOrNull { it.subscriptionId == message.subscriptionId }
+            Text(
+                text = sim?.let { "SIM ${it.slotIndex + 1} · ${it.label}" } ?: "Unknown SIM",
+                modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         // Everything an SMS app knows about the message, revealed on tap so the default view stays clean.
@@ -387,5 +406,55 @@ private fun ComposeBar(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SelectionBar(
+    count: Int,
+    pinAction: Boolean,
+    onPin: () -> Unit,
+    onDelete: () -> Unit,
+    onClose: () -> Unit,
+) {
+    var confirmDelete by remember { mutableStateOf(false) }
+
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Filled.Close, contentDescription = "Clear selection")
+            }
+            Text(
+                text = "$count selected",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            IconButton(onClick = onPin) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_tab_pinned),
+                    contentDescription = if (pinAction) "Pin" else "Unpin",
+                )
+            }
+            IconButton(onClick = { confirmDelete = true }) {
+                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+            }
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(if (count == 1) "Delete message?" else "Delete $count messages?") },
+            text = { Text("This permanently removes them from this device.") },
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false; onDelete() }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
+            },
+        )
     }
 }
