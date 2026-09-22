@@ -66,69 +66,111 @@ Reverting to the previous SMS app: Settings → Apps → Default apps → SMS ap
 
 ## Architecture
 
-Single module (`:app`), package `com.abrarshakhi.smsman`, split two ways:
+Single module (`:app`), package `com.abrarshakhi.smsman`, split three ways:
 
-- `common/` — app shell owned by nobody in particular: `MainActivity`, `SmsmanApplication`,
-  `main/` (root scaffold + chrome contract), `navigation/`, `ui/theme/`.
-- `features/<feature>/presentation/` — one package per feature (`home`, `chat`, `onboarding`,
-  `settings`). Only `presentation/` layers exist so far; data/domain layers are unwritten.
+- `common/` — app shell: `MainActivity`, `SmsmanApplication` (starts Koin), `main/` (root scaffold
+  + chrome contract), `navigation/`, `ui/`, `util/`, `di/`.
+- `core/` — shared infrastructure: `telephony/` (provider reads, receivers, service),
+  `database/` (Room), `repository/`, `permissions/`, `model/`, `di/`.
+- `features/<name>/presentation/` — one package per feature (`conversations` backs both the All and
+  Favorite tabs, plus `pinned`, `chat`, `newmessage`, `onboarding`, `settings`). Each owns a
+  ViewModel, screen, chrome and Koin module.
 
 ### The Chrome pattern (the main thing to understand)
 
 There is exactly **one** `Scaffold`, in `common/main/AppRoot.kt`. Screens do not own their own
-scaffold, top bar, or FAB. Instead each route contributes a `ScreenChrome`
-(`common/main/ScreenChrome.kt`) — a data class of `title`, a `topBar` composable, and a `fab`
-composable — and `AppRoot` renders the chrome belonging to whatever route is on top of the back
-stack. A shared `pinnedScrollBehavior` is hoisted in `AppRoot` and reset on every route change.
+scaffold, top bar, bottom bar or FAB. Each route contributes a `ScreenChrome`
+(`common/main/ScreenChrome.kt`) — `title`, `topBar`, `bottomBar`, `fab` — and `AppRoot` renders the
+chrome for whatever route is on top of the back stack. A shared `pinnedScrollBehavior` is hoisted in
+`AppRoot` and reset on every route change.
 
-Wiring a new screen therefore means touching three places:
+This is why "FAB only on the All messages tab" needs no conditional: `allMessagesChrome()` supplies
+a `fab`, and the Favorite/Pinned chromes leave it at its empty default.
 
-1. Add the route to the `AppRouteKey` sealed interface (`common/navigation/AppRouteKey.kt`) —
-   `@Serializable`, implements `NavKey`.
-2. Add a branch to `AppRouteKey.chrome()` in `ScreenChrome.kt` (exhaustive `when`; the compiler
-   will catch a missing branch), returning a `xxxChrome()` factory from the feature's
-   `presentation/` package. Note these factories are plain functions, not composables.
-3. Register the entry in the `entryProvider { }` block in `common/navigation/AppNavigation.kt`.
+Adding a screen means touching three places:
+
+1. Add the route to `AppRouteKey` (`common/navigation/AppRouteKey.kt`) — `@Serializable`,
+   implements `NavKey`. Bottom-bar destinations implement the `AppRouteKey.HomeTab` sub-interface.
+2. Add a branch to `AppRouteKey.chrome()` in `ScreenChrome.kt`. The `when` is exhaustive, so the
+   compiler catches a missing branch. These factories are plain functions, not composables.
+3. Register the screen in the feature's Koin module with `navigation<AppRouteKey.X> { }`.
+   **This step has no compile-time check** — a route with chrome but no registration throws
+   `IllegalStateException("Unknown screen …")` at navigation time. Step 2 is the safety net.
 
 ### Navigation
 
-Navigation 3 (`NavDisplay`), not Navigation Compose. The back stack is a plain
-`SnapshotStateList<AppRouteKey>` that the app manages itself — see
-`common/navigation/BackStackController.kt` for the vocabulary:
+Navigation 3 (`NavDisplay`), not Navigation Compose, with entries assembled by Koin's
+`koinEntryProvider<AppRouteKey>()` from each feature's `navigation<T> {}` declarations. Both are
+`@KoinExperimentalAPI`.
+
+The back stack is a plain `SnapshotStateList<AppRouteKey>` — see
+`common/navigation/BackStackController.kt`:
 
 - `navigateTo(dest)` — push
 - `back()` — pop, guarded so the stack never empties
-- `switchTapTo(dest)` — clear and replace (tab-style switch)
+- `switchTapTo(dest)` — clear and replace; used by the bottom bar, so every tab sits at depth 1
 - `currentRoute()` — top of stack
 
+`NavDisplay` only installs its back handler while previous entries exist, so back at a tab root
+falls through to the system and exits the app.
+
+Screens reach the back stack through **`LocalAppBackStack`** (provided by `AppRoot`), because Koin's
+`navigation<T> {}` builder is `@Composable Scope.(T) -> Unit` and has no parameter slot for it.
+
 Persistence across process death goes through `AppRouteBackStackSaver`, a `listSaver` that
-kotlinx-serializes each `AppRouteKey`; a route that fails to decode is dropped and an empty result
-falls back to `Home`. This is why every `AppRouteKey` member must stay `@Serializable`.
+kotlinx-serializes each route, falling back to `AllMessages`. Every `AppRouteKey` must stay
+`@Serializable`. Note `kotlinx-serialization-json` is a direct dependency for this reason.
 
-`NavDisplay` is configured with `rememberSaveableStateHolderNavEntryDecorator()` and
-`rememberViewModelStoreNavEntryDecorator()`, so per-entry ViewModels are scoped to the nav entry.
+### Data layer
 
-## Current state — known incomplete wiring
+The **Telephony provider is the source of truth** for messages; they are never mirrored into Room.
+Room holds only metadata the provider cannot express (favourite per thread, pin per message).
 
-These are deliberate holes in the scaffold, not bugs to be surprised by:
+Hard-won constraints, all verified on a real device — violating them causes silent breakage:
 
-- **Koin is not initialized.** `koin-android` is a dependency and `MainActivity` calls
-  `koinViewModel()`, but there is no module definition and no `startKoin` anywhere —
-  `SmsmanApplication` is an empty `Application` subclass. The app will throw at launch until a
-  Koin module is defined and started from `SmsmanApplication`.
-- **`entryProvider { }` is empty** in `AppNavigation.kt`, so `NavDisplay` renders nothing. No
-  feature screen composables exist yet — the `features/*/presentation/` packages contain only
-  `*Chrome.kt` files with empty top bars and FABs.
-- **Ktor and DataStore are declared but unused.** No `HttpClient`, no `DataStore` usage in source.
-- **KSP is applied but has no processors** (`kspDebugKotlin` is SKIPPED).
-- **No SMS anything.** The manifest declares only a LAUNCHER activity — no SMS permissions, no
-  receivers, no default-SMS-app intent filters.
-- Theme is the unmodified Android Studio template (Purple/Pink placeholder colors, single
-  `bodyLarge` typography override).
+- **Always pass an explicit projection and tolerate missing columns** (`core/telephony/CursorExt.kt`).
+  The test device runs a ColorOS-customised provider returning vendor columns (`oplus_unread_count`,
+  `rcs_top`, a vendor `favourite` column on messages) that do not exist on other devices.
+- `content://mms-sms/conversations?simple=true` returns the threads table directly. The parameter is
+  **undocumented** — absent from the SDK sources — so guard it and fall back.
+- `LIMIT` must be appended to the sort order; the legacy provider never receives
+  `QUERY_ARG_SQL_LIMIT`.
+- `recipient_ids` are ids into `content://mms-sms/canonical-addresses`, not addresses. That URI has
+  no public constant.
+- `ThreadsColumns` has **no unread-count column**; counts come from the message table.
+- Filter `message_count > 0` — empty stub threads exist and render blank.
+- Orphan SMS rows with a null `thread_id` exist; skip them.
+- `sub_id` is **not** a slot index (live values here are 2 and 3). Resolve via
+  `SubscriptionManager`, and expect ids belonging to removed SIMs.
+- Addresses are frequently alphanumeric shortcodes ("GP Combo"), so `PhoneLookup` misses are normal,
+  and number formatting must not be applied blindly. Do **not** pre-normalise before `PhoneLookup`.
+- Bengali message bodies force UCS-2, i.e. **70 chars per SMS segment, not 160**. Use
+  `SmsMessage.calculateLength`, never `length / 160`.
+
+`TelephonyChangeObserver` watches `content://mms-sms/` with descendants and debounces, because one
+inbound message fires several `notifyChange` calls. It is only a freshness signal for visible UI —
+it dies with the process; durability comes from `SmsDeliverReceiver`.
+
+### Being the default SMS app
+
+Holding the SMS role means **the platform stops writing inbound SMS to the provider** —
+`core/telephony/receiver/SmsDeliverReceiver` must persist it or messages are lost. The four
+components required for role eligibility are declared in `AndroidManifest.xml`; `BROADCAST_SMS` and
+`BROADCAST_WAP_PUSH` are signature-level and sit on the receivers, never in `<uses-permission>`.
+
+## Current state
+
+Working: Koin DI, bottom-nav tabs, the SMS role and permission flow, inbound SMS persistence, Room
+metadata, and the conversation list reading real provider data.
+
+Not built yet: the chat screen, pin/favourite UI, sending SMS (so the app cannot send at all yet),
+and the new-message screen. `MmsWapPushReceiver` is deliberately inert, so **incoming MMS is not
+persisted** while this app is default; the test device has 0 MMS rows. `DataStore` is declared but
+unused.
 
 ## Conventions
 
 - Kotlin official code style (`kotlin.code.style=official`).
-- Feature code goes under `features/<name>/`; anything shared by more than one feature goes under
-  `common/`. Keep `common/` from depending on `features/` except in `ScreenChrome.kt`, which is the
-  one intentional inversion point.
+- Feature code under `features/<name>/`; cross-feature infrastructure under `core/`; app shell under
+  `common/`. `common/` must not depend on `features/` except `ScreenChrome.kt`, the one intentional
+  inversion point.
