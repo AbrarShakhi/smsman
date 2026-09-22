@@ -242,5 +242,6 @@ The following are known and intentional omissions in the present revision.
 
 ## Licence
 
-No licence has been declared for this repository. In the absence of a licence, default copyright
-applies and no permissions are granted to third parties.
+Released under the MIT Licence. See [LICENSE](LICENSE) for the full text.
+
+Copyright (c) 2026 AbrarShakhi.
