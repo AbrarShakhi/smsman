@@ -22,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.abrarshakhi.smsman.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -74,7 +76,11 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Set up SMS Man", style = MaterialTheme.typography.headlineMedium)
+        val appName = stringResource(R.string.app_name)
+        Text(
+            text = stringResource(R.string.onboarding_title, appName),
+            style = MaterialTheme.typography.headlineMedium,
+        )
         Spacer(Modifier.height(24.dp))
 
         SetupStep(
@@ -94,7 +100,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         SetupStep(
             title = "2. Default SMS app",
             detail = if (isDefaultSmsApp) {
-                "SMS Man is your default SMS app"
+                stringResource(R.string.onboarding_default_sms_done, appName)
             } else {
                 "Android only lets the default SMS app receive and store messages."
             },

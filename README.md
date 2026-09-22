@@ -1,4 +1,4 @@
-# SMS Man
+# SmsMan
 
 An Android SMS client built with Jetpack Compose, presenting a Material 3 Expressive interface
 modelled on Google Messages. The application operates as a default SMS handler, reading from and
@@ -10,7 +10,7 @@ writing to the system Telephony provider.
 
 ## Overview
 
-SMS Man is a single-module Android application that implements the complete lifecycle of a default
+SmsMan is a single-module Android application that implements the complete lifecycle of a default
 SMS handler: receiving and persisting inbound messages, presenting conversations and message
 threads, composing and transmitting messages across multiple SIM subscriptions, and notifying the
 user of incoming traffic.

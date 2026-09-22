@@ -1,9 +1,12 @@
 <resources>
-    <string name="app_name">smsman</string>
+    <string name="app_name">SmsMan</string>
 
     <string name="tab_all_messages">Messages</string>
     <string name="tab_favorite">Favorite</string>
     <string name="tab_pinned">Pinned</string>
 
     <string name="action_start_chat">Start chat</string>
+
+    <string name="onboarding_title">Set up %1$s</string>
+    <string name="onboarding_default_sms_done">%1$s is your default SMS app</string>
 </resources>
