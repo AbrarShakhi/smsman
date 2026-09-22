@@ -1,4 +1,4 @@
-package com.abrarshakhi.smsman.features.home.presentation
+package com.abrarshakhi.smsman.features.pinned.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun PinnedScreen(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Home", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "Pinned", style = MaterialTheme.typography.headlineMedium)
     }
 }

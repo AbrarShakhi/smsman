@@ -16,7 +16,7 @@ import com.abrarshakhi.smsman.common.navigation.currentRoute
 import com.abrarshakhi.smsman.common.navigation.rememberAppBackStack
 
 @Composable
-fun AppRoot(startRoute: AppRouteKey = AppRouteKey.Home, mainAppViewModel: MainAppViewModel) {
+fun AppRoot(startRoute: AppRouteKey = AppRouteKey.AllMessages, mainAppViewModel: MainAppViewModel) {
     val backStack = rememberAppBackStack(startRoute)
     val current = backStack.currentRoute()
     val currentChrome = current?.chrome()
@@ -34,6 +34,7 @@ fun AppRoot(startRoute: AppRouteKey = AppRouteKey.Home, mainAppViewModel: MainAp
             .nestedScroll(scrollBehaviorTop.nestedScrollConnection),
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = { currentChrome?.topBar?.invoke(backStack, scrollBehaviorTop) },
+        bottomBar = { currentChrome?.bottomBar?.invoke(backStack) },
         floatingActionButton = { currentChrome?.fab?.invoke(backStack) }
     ) { innerPadding ->
         AppNavigation(

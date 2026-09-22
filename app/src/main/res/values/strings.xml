@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">smsman</string>
+
+    <string name="tab_all_messages">Messages</string>
+    <string name="tab_favorite">Favorite</string>
+    <string name="tab_pinned">Pinned</string>
+
+    <string name="action_start_chat">Start chat</string>
 </resources>

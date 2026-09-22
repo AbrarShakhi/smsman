@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmsmanTheme {
                 val mainAppViewModel: MainAppViewModel = koinViewModel()
-                AppRoot(startRoute = AppRouteKey.Home, mainAppViewModel)
+                AppRoot(startRoute = AppRouteKey.AllMessages, mainAppViewModel)
             }
         }
     }

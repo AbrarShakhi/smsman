@@ -1,15 +1,15 @@
-package com.abrarshakhi.smsman.features.chat.presentation
+package com.abrarshakhi.smsman.features.newmessage.presentation
 
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import com.abrarshakhi.smsman.common.main.BackNavigationIcon
 import com.abrarshakhi.smsman.common.main.ScreenChrome
+import com.abrarshakhi.smsman.common.main.BackNavigationIcon
 
-fun chatChrome() = ScreenChrome(
-    title = "Chat",
+fun newMessageChrome() = ScreenChrome(
+    title = "New message",
     topBar = { backStack, scrollBehavior ->
         TopAppBar(
-            title = { Text("Chat") },
+            title = { Text("New message") },
             navigationIcon = { BackNavigationIcon(backStack) },
             scrollBehavior = scrollBehavior,
         )

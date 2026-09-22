@@ -1,4 +1,4 @@
-package com.abrarshakhi.smsman.features.chat.presentation
+package com.abrarshakhi.smsman.features.newmessage.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,8 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun ChatScreen(threadId: Long, modifier: Modifier = Modifier) {
+fun NewMessageScreen(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Chat $threadId", style = MaterialTheme.typography.headlineMedium)
+        Text(text = "New message", style = MaterialTheme.typography.headlineMedium)
     }
 }

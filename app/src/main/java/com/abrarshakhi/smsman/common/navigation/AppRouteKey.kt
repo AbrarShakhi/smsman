@@ -8,13 +8,26 @@ sealed interface AppRouteKey : NavKey {
     @Serializable
     data object Onboarding : AppRouteKey
 
+    /** Bottom-bar destinations. Switched with [switchTapTo], so each sits at back-stack depth 1. */
     @Serializable
-    data object Home : AppRouteKey
+    sealed interface HomeTab : AppRouteKey
+
+    @Serializable
+    data object AllMessages : HomeTab
+
+    @Serializable
+    data object Favorite : HomeTab
+
+    @Serializable
+    data object Pinned : HomeTab
 
     @Serializable
     data class Chat(
-        val chatId: Long,
+        val threadId: Long,
     ) : AppRouteKey
+
+    @Serializable
+    data object NewMessage : AppRouteKey
 
     @Serializable
     data object Settings : AppRouteKey

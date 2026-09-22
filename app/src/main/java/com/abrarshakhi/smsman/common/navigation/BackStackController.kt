@@ -28,13 +28,13 @@ val AppRouteBackStackSaver: Saver<SnapshotStateList<AppRouteKey>, Any> = listSav
             runCatching { Json.decodeFromString<AppRouteKey>(encoded) }.getOrNull()
         }
         mutableStateListOf<AppRouteKey>().apply {
-            addAll(routes.ifEmpty { listOf(AppRouteKey.Home) })
+            addAll(routes.ifEmpty { listOf(AppRouteKey.AllMessages) })
         }
     },
 )
 
 @Composable
-fun rememberAppBackStack(start: AppRouteKey = AppRouteKey.Home): SnapshotStateList<AppRouteKey> =
+fun rememberAppBackStack(start: AppRouteKey = AppRouteKey.AllMessages): SnapshotStateList<AppRouteKey> =
     rememberSaveable(saver = AppRouteBackStackSaver) {
         mutableStateListOf(start)
     }
