@@ -10,6 +10,7 @@ import com.abrarshakhi.smsman.features.conversations.presentation.favoriteChrome
 import com.abrarshakhi.smsman.features.newmessage.presentation.newMessageChrome
 import com.abrarshakhi.smsman.features.onboarding.presentation.onboardingChrome
 import com.abrarshakhi.smsman.features.pinned.presentation.pinnedChrome
+import com.abrarshakhi.smsman.features.search.presentation.searchChrome
 import com.abrarshakhi.smsman.features.settings.presentation.settingsChrome
 
 data class ScreenChrome(
@@ -34,5 +35,6 @@ fun AppRouteKey.chrome() = when (this) {
     is AppRouteKey.Pinned -> pinnedChrome()
     is AppRouteKey.Chat -> chatChrome(threadId)
     is AppRouteKey.NewMessage -> newMessageChrome()
+    is AppRouteKey.Search -> searchChrome()
     is AppRouteKey.Settings -> settingsChrome()
 }

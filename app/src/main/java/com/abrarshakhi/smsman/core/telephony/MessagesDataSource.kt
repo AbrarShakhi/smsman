@@ -155,6 +155,66 @@ class MessagesDataSource(private val context: Context) {
         0
     }
 
+    /**
+     * Full-text-ish search across every message body.
+     *
+     * LIKE wildcards present in the query are escaped, so a user typing "100%" searches for that
+     * literal string rather than matching everything.
+     */
+    fun searchMessages(query: String, limit: Int = 200): List<Message> {
+        if (query.isBlank()) return emptyList()
+        val escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+        val projection = arrayOf(
+            BaseColumns._ID,
+            Telephony.Sms.THREAD_ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.DATE_SENT,
+            Telephony.Sms.READ,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.SUBSCRIPTION_ID,
+        )
+        return try {
+            resolver.query(
+                Telephony.Sms.CONTENT_URI,
+                projection,
+                "${Telephony.Sms.BODY} LIKE ? ESCAPE '\\'",
+                arrayOf("%$escaped%"),
+                "${Telephony.Sms.DATE} DESC LIMIT $limit",
+            )?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) {
+                        add(
+                            Message(
+                                id = cursor.longOr(BaseColumns._ID),
+                                threadId = cursor.longOr(Telephony.Sms.THREAD_ID),
+                                address = cursor.stringOrNull(Telephony.Sms.ADDRESS),
+                                body = cursor.stringOrNull(Telephony.Sms.BODY).orEmpty(),
+                                date = cursor.longOr(Telephony.Sms.DATE),
+                                dateSent = cursor.longOr(Telephony.Sms.DATE_SENT),
+                                isRead = cursor.intOr(Telephony.Sms.READ) != 0,
+                                type = MessageType.fromProvider(cursor.intOr(Telephony.Sms.TYPE)),
+                                status = DeliveryStatus.fromProvider(
+                                    cursor.intOr(Telephony.Sms.STATUS, -1),
+                                ),
+                                subscriptionId = cursor.intOr(
+                                    Telephony.Sms.SUBSCRIPTION_ID,
+                                    SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+                                ),
+                            ),
+                        )
+                    }
+                }
+            }.orEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "Message search failed", e)
+            emptyList()
+        }
+    }
+
     /** Distinct addresses seen in a thread; used to title the chat without a canonical-address hop. */
     fun threadAddresses(threadId: Long, limit: Int = 50): List<String> = try {
         resolver.query(

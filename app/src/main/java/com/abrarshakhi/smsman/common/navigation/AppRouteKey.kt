@@ -32,5 +32,8 @@ sealed interface AppRouteKey : NavKey {
     data object NewMessage : AppRouteKey
 
     @Serializable
+    data object Search : AppRouteKey
+
+    @Serializable
     data object Settings : AppRouteKey
 }

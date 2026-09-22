@@ -9,6 +9,7 @@ import com.abrarshakhi.smsman.core.repository.MessageRepository
 import com.abrarshakhi.smsman.core.notification.MessageNotifier
 import com.abrarshakhi.smsman.core.settings.SettingsRepository
 import com.abrarshakhi.smsman.core.repository.PinnedRepository
+import com.abrarshakhi.smsman.core.repository.SearchRepository
 import com.abrarshakhi.smsman.core.repository.ThreadTitleResolver
 import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.SimDataSource
@@ -45,4 +46,5 @@ val coreModule = module {
     single { PinnedRepository(get(), get(), get(), get(), Dispatchers.IO) }
     single { MessageNotifier(androidContext()) }
     single { SettingsRepository(androidContext()) }
+    single { SearchRepository(get(), get(), Dispatchers.IO) }
 }

@@ -2,6 +2,7 @@ package com.abrarshakhi.smsman.features.conversations.presentation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -33,7 +34,7 @@ fun allMessagesChrome() = ScreenChrome(
     topBar = { backStack, scrollBehavior ->
         TopAppBar(
             title = { Text(stringResource(R.string.tab_all_messages)) },
-            actions = { OverflowMenu(backStack) },
+            actions = { SearchAction(backStack); OverflowMenu(backStack) },
             scrollBehavior = scrollBehavior,
         )
     },
@@ -57,12 +58,20 @@ fun favoriteChrome() = ScreenChrome(
     topBar = { backStack, scrollBehavior ->
         TopAppBar(
             title = { Text(stringResource(R.string.tab_favorite)) },
-            actions = { OverflowMenu(backStack) },
+            actions = { SearchAction(backStack); OverflowMenu(backStack) },
             scrollBehavior = scrollBehavior,
         )
     },
     bottomBar = { backStack -> AppBottomBar(backStack) },
 )
+
+/** Search entry point, shared by the tab destinations. */
+@Composable
+fun SearchAction(backStack: SnapshotStateList<AppRouteKey>) {
+    IconButton(onClick = { backStack.navigateTo(AppRouteKey.Search) }) {
+        Icon(Icons.Filled.Search, contentDescription = "Search")
+    }
+}
 
 /** Shared overflow for the tab destinations. */
 @Composable
