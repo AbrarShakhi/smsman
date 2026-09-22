@@ -160,13 +160,27 @@ components required for role eligibility are declared in `AndroidManifest.xml`; 
 
 ## Current state
 
-Working: Koin DI, bottom-nav tabs, the SMS role and permission flow, inbound SMS persistence, Room
-metadata, and the conversation list reading real provider data.
+All planned milestones are implemented and verified on a physical device: Koin DI, bottom-nav tabs,
+the SMS role and permission flow, inbound persistence, Room metadata, the conversation list, the
+chat screen, sending with dual-SIM selection, the new-message screen, and pin/favourite.
 
-Not built yet: the chat screen, pin/favourite UI, sending SMS (so the app cannot send at all yet),
-and the new-message screen. `MmsWapPushReceiver` is deliberately inert, so **incoming MMS is not
-persisted** while this app is default; the test device has 0 MMS rows. `DataStore` is declared but
-unused.
+Verified end to end on real traffic: a message sent from SIM 2 was stored as SENT, its delivery
+report parsed to STATUS_COMPLETE, and the received copy persisted by `SmsDeliverReceiver` — i.e.
+inbound messages are not dropped while this app holds the role.
+
+Not built: MMS. `MmsWapPushReceiver` is deliberately inert, so **incoming MMS is not persisted**
+while this app is default (the test device has 0 MMS rows). `DataStore` is declared but unused.
+There is no notification support yet, no search, and no settings screen beyond a placeholder.
+
+### Known gaps worth knowing before extending
+
+- **Notifications are absent.** As the default SMS app this is a real gap: nothing tells the user a
+  message arrived. Note trampolines are banned from API 31 — a notification tap must target the
+  Activity directly, and `POST_NOTIFICATIONS` is only runtime-requestable from API 33, so the denial
+  path is invisible on an API 31 device.
+- **Messages are not marked read.** Opening a thread does not clear its unread state.
+- **The conversation list loads up to 200 threads and a chat up to 500 messages**, with no paging.
+- Favouriting is only reachable from the chat top bar, not from a list long-press.
 
 ## Conventions
 
