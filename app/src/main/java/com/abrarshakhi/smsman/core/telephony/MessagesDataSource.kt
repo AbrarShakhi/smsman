@@ -217,6 +217,39 @@ class MessagesDataSource(private val context: Context) {
     }
 
     /**
+     * Marks a conversation unread again, by clearing the read flag on its most recent message only.
+     *
+     * Clearing it on every message would make the unread count jump to the size of the whole
+     * thread; one unread message is what the user means by "unread".
+     *
+     * `seen` is deliberately left alone. It records that the user has been shown the message, and
+     * resetting it invites the system and other SMS apps to treat the message as newly arrived.
+     */
+    fun markThreadUnread(threadId: Long): Int = try {
+        val latestId = resolver.query(
+            Telephony.Sms.CONTENT_URI,
+            arrayOf(BaseColumns._ID),
+            "${Telephony.Sms.THREAD_ID} = ?",
+            arrayOf(threadId.toString()),
+            "${Telephony.Sms.DATE} DESC LIMIT 1",
+        )?.use { if (it.moveToFirst()) it.getLong(0) else null }
+
+        if (latestId == null) {
+            0
+        } else {
+            resolver.update(
+                ContentUris.withAppendedId(Telephony.Sms.CONTENT_URI, latestId),
+                ContentValues().apply { put(Telephony.Sms.READ, 0) },
+                null,
+                null,
+            )
+        }
+    } catch (e: Exception) {
+        Log.e(TAG, "Could not mark thread $threadId unread", e)
+        0
+    }
+
+    /**
      * Deletes individual messages. Only the default SMS app may delete from the provider.
      * Returns the number of rows actually removed.
      */

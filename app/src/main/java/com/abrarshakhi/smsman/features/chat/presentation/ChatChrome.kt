@@ -49,6 +49,7 @@ fun chatChrome(threadId: Long) = ScreenChrome(
     topBar = { backStack, scrollBehavior ->
         val resolver: ThreadTitleResolver = koinInject()
         val metadata: MessageMetadataRepository = koinInject()
+        val messages: MessagesDataSource = koinInject()
         val scope = rememberCoroutineScope()
         val favorites by metadata.observeFavoriteThreadIds().collectAsState(initial = emptySet())
         val isFavorite = threadId in favorites
@@ -104,6 +105,13 @@ fun chatChrome(threadId: Long) = ScreenChrome(
                     threadId = threadId,
                     isFavorite = isFavorite,
                     onToggleFavorite = { scope.launch { metadata.setFavorite(threadId, !isFavorite) } },
+                    onMarkUnread = {
+                        scope.launch {
+                            withContext(Dispatchers.IO) { messages.markThreadUnread(threadId) }
+                            // Leaving immediately is the point: staying would re-mark it read.
+                            backStack.back()
+                        }
+                    },
                     onDeleted = { backStack.back() },
                 )
             },
@@ -121,6 +129,7 @@ private fun ChatOverflowMenu(
     threadId: Long,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    onMarkUnread: () -> Unit,
     onDeleted: () -> Unit,
 ) {
     val messages: MessagesDataSource = koinInject()
@@ -142,14 +151,13 @@ private fun ChatOverflowMenu(
                 onToggleFavorite()
             },
         )
+        // Opening the conversation already marked it read, so the useful action here is the
+        // inverse: mark it unread and leave, which is what the user is asking for.
         DropdownMenuItem(
-            text = { Text("Mark as read") },
+            text = { Text("Mark as unread") },
             onClick = {
                 open = false
-                scope.launch {
-                    withContext(Dispatchers.IO) { messages.markThreadRead(threadId) }
-                    notifier.cancel(threadId)
-                }
+                onMarkUnread()
             },
         )
         DropdownMenuItem(

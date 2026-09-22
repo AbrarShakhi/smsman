@@ -43,6 +43,31 @@ adb shell cmd role add-role-holder android.app.role.SMS com.abrarshakhi.smsman
 `GRANT_RUNTIME_PERMISSIONS`), so the role command is the only scripted path; otherwise permissions
 must be granted through the onboarding UI.
 
+### INSTALL_FAILED_UPDATE_INCOMPATIBLE
+
+This machine has **two** debug keystores, so CLI and Android Studio builds sign differently and
+cannot update over each other:
+
+| Keystore | Used by |
+|---|---|
+| `~/.config/.android/debug.keystore` | Android Studio |
+| `~/.config/.android/.android/debug.keystore` | plain `./gradlew` |
+
+`~/.android` is a symlink to `~/.config/.android`, and `ANDROID_SDK_HOME` is set to `~/.android`.
+That variable expects the **parent** of `.android`, so AGP appends another `.android` and generates
+a second keystore at the doubled path.
+
+Prefix Gradle invocations to use the same key as Studio — no uninstall required, which matters
+because uninstalling drops the SMS role and clears the Room metadata:
+
+```bash
+ANDROID_SDK_HOME="$HOME/.config" ./gradlew installDebug
+```
+
+The permanent fix is to unset `ANDROID_SDK_HOME` (deprecated) or set
+`ANDROID_USER_HOME=$HOME/.config/.android` instead, but that is a change to the user's shell
+environment.
+
 Useful checks:
 
 ```bash

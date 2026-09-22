@@ -220,13 +220,6 @@ class ChatViewModel(
         viewModelScope.launch { metadata.setFavorite(threadId, next) }
     }
 
-    fun onMarkRead() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) { messages.markThreadRead(threadId) }
-            notifier.cancel(threadId)
-        }
-    }
-
     /** Deletes the whole conversation; [onDeleted] lets the caller leave the now-empty screen. */
     fun onDeleteConversation(onDeleted: () -> Unit) {
         viewModelScope.launch {
