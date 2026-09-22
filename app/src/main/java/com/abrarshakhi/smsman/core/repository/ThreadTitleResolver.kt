@@ -2,6 +2,7 @@ package com.abrarshakhi.smsman.core.repository
 
 import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
+import com.abrarshakhi.smsman.core.telephony.PhoneNumbers
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
@@ -22,7 +23,7 @@ class ThreadTitleResolver(
 ) {
 
     suspend fun resolve(threadId: Long): ThreadTitle = withContext(ioDispatcher) {
-        val addresses = messages.threadAddresses(threadId)
+        val addresses = PhoneNumbers.distinct(messages.threadAddresses(threadId))
         if (addresses.isEmpty()) return@withContext ThreadTitle("Conversation", null)
 
         val named = addresses.map { address -> address to contacts.lookup(address)?.displayName }

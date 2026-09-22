@@ -3,6 +3,7 @@ package com.abrarshakhi.smsman.core.repository
 import com.abrarshakhi.smsman.core.model.Conversation
 import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import com.abrarshakhi.smsman.core.telephony.ConversationsDataSource
+import com.abrarshakhi.smsman.core.telephony.PhoneNumbers
 import com.abrarshakhi.smsman.core.telephony.TelephonyChangeObserver
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -43,7 +44,7 @@ class ConversationRepository(
         val unread = conversations.loadUnreadCounts()
 
         return threads.map { thread ->
-            val addresses = thread.recipientIds.mapNotNull(canonical::get)
+            val addresses = PhoneNumbers.distinct(thread.recipientIds.mapNotNull(canonical::get))
             val resolved = addresses.map { address -> address to contacts.lookup(address) }
 
             Conversation(

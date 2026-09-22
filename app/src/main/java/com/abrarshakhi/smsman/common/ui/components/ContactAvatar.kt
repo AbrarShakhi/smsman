@@ -4,6 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +35,9 @@ fun ContactAvatar(
     size: Int = 48,
 ) {
     val color = AvatarColors[colorIndex.mod(AvatarColors.size)]
-    val initial = displayName.trim().firstOrNull()?.uppercase() ?: "?"
+    // A raw number has no meaningful initial - "+8801521778285" rendered as "+". Unsaved numbers
+    // get a person glyph instead, as Messages does.
+    val initial = displayName.trim().firstOrNull { it.isLetter() }?.uppercase()
 
     Box(
         modifier = modifier
@@ -41,11 +46,20 @@ fun ContactAvatar(
             .background(color),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = initial,
-            color = Color.White,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Medium,
-        )
+        if (initial != null) {
+            Text(
+                text = initial,
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size((size * 0.6).dp),
+            )
+        }
     }
 }
