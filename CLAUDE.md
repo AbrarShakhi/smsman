@@ -39,6 +39,31 @@ AGP 9 conventions in use: R8 keep rules live in `app/src/main/keepRules/rules.ke
 `proguard-rules.pro`), and release optimization is currently **disabled**
 (`buildTypes { release { optimization { enable = false } } }`).
 
+## Running on a device (important)
+
+This app holds the SMS role. **`./gradlew installDebug` drops the role and Android then
+auto-revokes every SMS permission**, so the app falls back to onboarding after each install.
+Restore it with one command — re-holding the role re-grants the SMS permissions automatically:
+
+```bash
+./gradlew installDebug
+adb shell cmd role add-role-holder android.app.role.SMS com.abrarshakhi.smsman
+```
+
+`adb shell pm grant` does **not** work on the ColorOS test device (shell lacks
+`GRANT_RUNTIME_PERMISSIONS`), so the role command is the only scripted path; otherwise permissions
+must be granted through the onboarding UI.
+
+Useful checks:
+
+```bash
+adb shell cmd role get-role-holders android.app.role.SMS
+adb shell dumpsys package com.abrarshakhi.smsman | grep -oE "android.permission.[A-Z_]+: granted=[a-z]+" | sort -u
+adb exec-out screencap -p > /tmp/shot.png
+```
+
+Reverting to the previous SMS app: Settings → Apps → Default apps → SMS app.
+
 ## Architecture
 
 Single module (`:app`), package `com.abrarshakhi.smsman`, split two ways:
