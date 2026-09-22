@@ -1,6 +1,7 @@
 package com.abrarshakhi.smsman.common.di
 
 import com.abrarshakhi.smsman.common.main.MainAppViewModel
+import com.abrarshakhi.smsman.core.di.coreModule
 import com.abrarshakhi.smsman.features.chat.presentation.chatModule
 import com.abrarshakhi.smsman.features.conversations.presentation.conversationsModule
 import com.abrarshakhi.smsman.features.newmessage.presentation.newMessageModule
@@ -21,6 +22,7 @@ val commonModule = module {
  */
 val appModules = listOf(
     commonModule,
+    coreModule,
     onboardingModule,
     conversationsModule,
     pinnedModule,
