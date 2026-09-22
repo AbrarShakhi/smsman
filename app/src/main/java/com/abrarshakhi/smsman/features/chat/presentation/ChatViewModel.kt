@@ -8,6 +8,8 @@ import com.abrarshakhi.smsman.core.model.SimInfo
 import com.abrarshakhi.smsman.core.repository.MessageMetadataRepository
 import com.abrarshakhi.smsman.core.repository.MessageRepository
 import com.abrarshakhi.smsman.core.telephony.SegmentInfo
+import com.abrarshakhi.smsman.core.notification.MessageNotifier
+import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.SmsSender
 import com.abrarshakhi.smsman.core.telephony.segmentInfo
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +56,8 @@ class ChatViewModel(
     private val repository: MessageRepository,
     private val metadata: MessageMetadataRepository,
     private val sender: SmsSender,
+    private val messages: MessagesDataSource,
+    private val notifier: MessageNotifier,
     private val threadId: Long,
 ) : ViewModel() {
 
@@ -61,6 +65,13 @@ class ChatViewModel(
     val state: StateFlow<ChatState> = _state.asStateFlow()
 
     init {
+        // Opening a conversation is the user reading it: clear unread state and drop its
+        // notification. Scoped to unread rows, so it is a no-op when there is nothing to clear.
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { messages.markThreadRead(threadId) }
+            notifier.cancel(threadId)
+        }
+
         viewModelScope.launch {
             repository.observeThread(threadId)
                 .catch { throwable ->

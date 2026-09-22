@@ -11,7 +11,11 @@ import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.abrarshakhi.smsman.core.notification.MessageNotifier
+import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import kotlinx.coroutines.launch
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 private const val TAG = "SmsDeliverReceiver"
 
@@ -25,7 +29,10 @@ private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
  * delivers SMS_DELIVER here instead — persisting the message becomes our responsibility. If this
  * receiver did nothing, every incoming text would be silently lost.
  */
-class SmsDeliverReceiver : BroadcastReceiver() {
+class SmsDeliverReceiver : BroadcastReceiver(), KoinComponent {
+
+    private val notifier: MessageNotifier by inject()
+    private val contacts: ContactsDataSource by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Telephony.Sms.Intents.SMS_DELIVER_ACTION) return
@@ -80,5 +87,16 @@ class SmsDeliverReceiver : BroadcastReceiver() {
 
         val uri = context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
         Log.i(TAG, "Persisted inbound SMS (${parts.size} part(s), subId=$subId) as $uri")
+
+        // Storing the message is not enough: as the default SMS app nothing else will tell the user.
+        if (!address.isNullOrBlank()) {
+            val threadId = Telephony.Threads.getOrCreateThreadId(context, address)
+            notifier.notifyIncoming(
+                threadId = threadId,
+                senderLabel = contacts.lookup(address)?.displayName ?: address,
+                address = address,
+                body = body,
+            )
+        }
     }
 }

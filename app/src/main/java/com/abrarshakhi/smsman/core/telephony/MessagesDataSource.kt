@@ -1,5 +1,6 @@
 package com.abrarshakhi.smsman.core.telephony
 
+import android.content.ContentValues
 import android.content.Context
 import android.provider.BaseColumns
 import android.provider.Telephony
@@ -129,6 +130,29 @@ class MessagesDataSource(private val context: Context) {
             Log.e(TAG, "Pinned message lookup failed", e)
             emptyList()
         }
+    }
+
+    /**
+     * Clears unread state for a thread. Only the default SMS app may write here, which this app is.
+     *
+     * `read` drives the unread badge; `seen` suppresses the system's own unread treatment. Both are
+     * set, and the update is scoped to rows that are actually unread so it is a no-op when nothing
+     * changed and does not spuriously trigger the content observer.
+     */
+    fun markThreadRead(threadId: Long): Int = try {
+        val values = ContentValues().apply {
+            put(Telephony.Sms.READ, 1)
+            put(Telephony.Sms.SEEN, 1)
+        }
+        resolver.update(
+            Telephony.Sms.CONTENT_URI,
+            values,
+            "${Telephony.Sms.THREAD_ID} = ? AND ${Telephony.Sms.READ} = 0",
+            arrayOf(threadId.toString()),
+        )
+    } catch (e: Exception) {
+        Log.e(TAG, "Could not mark thread $threadId read", e)
+        0
     }
 
     /** Distinct addresses seen in a thread; used to title the chat without a canonical-address hop. */
