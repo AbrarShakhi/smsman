@@ -6,12 +6,14 @@ import androidx.compose.ui.res.stringResource
 import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.main.AppBottomBar
 import com.abrarshakhi.smsman.common.main.ScreenChrome
+import com.abrarshakhi.smsman.features.conversations.presentation.OverflowMenu
 
 fun pinnedChrome() = ScreenChrome(
     title = "Pinned",
-    topBar = { _, scrollBehavior ->
+    topBar = { backStack, scrollBehavior ->
         TopAppBar(
             title = { Text(stringResource(R.string.tab_pinned)) },
+            actions = { OverflowMenu(backStack) },
             scrollBehavior = scrollBehavior,
         )
     },

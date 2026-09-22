@@ -8,6 +8,8 @@ import com.abrarshakhi.smsman.common.main.AppRoot
 import com.abrarshakhi.smsman.common.main.MainAppViewModel
 import com.abrarshakhi.smsman.common.navigation.AppRouteKey
 import com.abrarshakhi.smsman.common.permissionsAndRoleReady
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abrarshakhi.smsman.common.ui.theme.SmsmanTheme
 import com.abrarshakhi.smsman.core.notification.EXTRA_THREAD_ID
 import com.abrarshakhi.smsman.core.permissions.SmsRoleManager
@@ -34,8 +36,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            SmsmanTheme {
-                val mainAppViewModel: MainAppViewModel = koinViewModel()
+            val mainAppViewModel: MainAppViewModel = koinViewModel()
+            val settings by mainAppViewModel.settings.collectAsStateWithLifecycle()
+            SmsmanTheme(settings = settings) {
                 AppRoot(startRoute = startRoute, mainAppViewModel = mainAppViewModel)
             }
         }
