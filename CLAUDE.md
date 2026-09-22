@@ -174,13 +174,22 @@ There is no notification support yet, no search, and no settings screen beyond a
 
 ### Known gaps worth knowing before extending
 
-- **Notifications are absent.** As the default SMS app this is a real gap: nothing tells the user a
-  message arrived. Note trampolines are banned from API 31 — a notification tap must target the
-  Activity directly, and `POST_NOTIFICATIONS` is only runtime-requestable from API 33, so the denial
-  path is invisible on an API 31 device.
-- **Messages are not marked read.** Opening a thread does not clear its unread state.
+- **MMS is not persisted.** `MmsWapPushReceiver` is inert by design; decoding needs the WAP PDU
+  codec. The test device has 0 MMS rows, so nothing is currently at risk.
 - **The conversation list loads up to 200 threads and a chat up to 500 messages**, with no paging.
 - Favouriting is only reachable from the chat top bar, not from a list long-press.
+- No search, and the settings screen is still a placeholder.
+- `POST_NOTIFICATIONS` is only runtime-requestable from API 33, so the denial path is invisible on
+  the API 31 test device and needs an emulator to exercise.
+
+### Notification rules that are easy to get wrong
+
+- **Trampolines are banned from API 31**: a notification tap must target the Activity directly, not
+  a receiver or service that then starts one.
+- The reply action needs **`FLAG_MUTABLE`** so the system can write the RemoteInput result into the
+  intent; every other PendingIntent in the app is `FLAG_IMMUTABLE`, which is mandatory under
+  targetSdk 31+ and throws at construction if omitted.
+- Notification ids are thread ids, so a conversation collapses into one notification.
 
 ## Conventions
 
