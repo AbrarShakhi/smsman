@@ -34,7 +34,8 @@ fun AppRoot(startRoute: AppRouteKey = AppRouteKey.Home, mainAppViewModel: MainAp
             .nestedScroll(scrollBehaviorTop.nestedScrollConnection),
         contentWindowInsets = WindowInsets.safeDrawing,
         topBar = { currentChrome?.topBar?.invoke(backStack, scrollBehaviorTop) },
-        floatingActionButton = { currentChrome?.fab?.invoke(backStack) }) { innerPadding ->
+        floatingActionButton = { currentChrome?.fab?.invoke(backStack) }
+    ) { innerPadding ->
         AppNavigation(
             backStack = backStack,
             modifier = Modifier.padding(innerPadding),

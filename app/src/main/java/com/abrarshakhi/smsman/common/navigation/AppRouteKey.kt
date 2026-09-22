@@ -13,7 +13,7 @@ sealed interface AppRouteKey : NavKey {
 
     @Serializable
     data class Chat(
-        val chatId: Int // Replace with chat ID which will be better.
+        val chatId: Long,
     ) : AppRouteKey
 
     @Serializable
