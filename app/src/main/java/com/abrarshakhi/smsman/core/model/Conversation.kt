@@ -28,3 +28,11 @@ data class ContactInfo(
     val photoUri: String?,
     val contactId: Long?,
 )
+
+data class ContactSuggestion(
+    val name: String,
+    val number: String,
+    val photoUri: String?,
+) {
+    val label: String get() = name.ifBlank { number }
+}

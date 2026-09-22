@@ -18,6 +18,8 @@ const val EXTRA_MESSAGE_ID = "com.abrarshakhi.smsman.MESSAGE_ID"
 const val EXTRA_PART_INDEX = "com.abrarshakhi.smsman.PART_INDEX"
 const val EXTRA_PART_COUNT = "com.abrarshakhi.smsman.PART_COUNT"
 
+data class SentMessage(val messageId: Long, val threadId: Long)
+
 class SmsSender(private val context: Context) {
 
     /**
@@ -26,7 +28,7 @@ class SmsSender(private val context: Context) {
      * As the default SMS app we own provider writes, so the row is inserted as OUTBOX up front
      * (the UI can show "Sending") and moved to SENT or FAILED by [SmsSentReceiver].
      */
-    fun send(address: String, body: String, subscriptionId: Int): Result<Long> = runCatching {
+    fun send(address: String, body: String, subscriptionId: Int): Result<SentMessage> = runCatching {
         require(address.isNotBlank()) { "No recipient" }
         require(body.isNotEmpty()) { "Empty message" }
 
@@ -56,7 +58,7 @@ class SmsSender(private val context: Context) {
             )
         }
         Log.i(TAG, "Sent message $messageId in ${parts.size} part(s) on subId=$subscriptionId")
-        messageId
+        SentMessage(messageId = messageId, threadId = threadId)
     }.onFailure { Log.e(TAG, "Send failed", it) }
 
     private fun smsManagerFor(subscriptionId: Int): SmsManager {

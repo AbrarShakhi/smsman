@@ -3,6 +3,7 @@ package com.abrarshakhi.smsman.core.telephony
 import android.content.Context
 import android.net.Uri
 import android.provider.ContactsContract
+import com.abrarshakhi.smsman.core.model.ContactSuggestion
 import android.util.Log
 import com.abrarshakhi.smsman.core.model.ContactInfo
 import java.util.concurrent.ConcurrentHashMap
@@ -26,6 +27,52 @@ class ContactsDataSource(private val context: Context) {
     }
 
     fun invalidate() = cache.clear()
+
+    /**
+     * Contact search for the new-message recipient field. Uses the Phone CONTENT_FILTER_URI, which
+     * matches on both display name and number, so one query serves either kind of input.
+     */
+    fun search(query: String, limit: Int = 20): List<ContactSuggestion> {
+        if (query.isBlank()) return emptyList()
+        val uri = Uri.withAppendedPath(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_FILTER_URI,
+            Uri.encode(query),
+        )
+        val projection = arrayOf(
+            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+            ContactsContract.CommonDataKinds.Phone.NUMBER,
+            ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI,
+        )
+        return try {
+            context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+                buildList {
+                    while (cursor.moveToNext() && size < limit) {
+                        val number = cursor.stringOrNull(
+                            ContactsContract.CommonDataKinds.Phone.NUMBER,
+                        ) ?: continue
+                        add(
+                            ContactSuggestion(
+                                name = cursor.stringOrNull(
+                                    ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                                ).orEmpty(),
+                                number = number,
+                                photoUri = cursor.stringOrNull(
+                                    ContactsContract.CommonDataKinds.Phone.PHOTO_THUMBNAIL_URI,
+                                ),
+                            ),
+                        )
+                    }
+                }
+            }.orEmpty()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "READ_CONTACTS not granted", e)
+            emptyList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Contact search failed", e)
+            emptyList()
+        }
+    }
 
     private fun query(address: String): ContactInfo? {
         // PhoneLookup normalises internally - verified that "+8801586365917" matches a contact
