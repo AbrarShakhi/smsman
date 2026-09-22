@@ -2,17 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚠️ README.md is stale — do not trust it
-
-`README.md` describes a fully-implemented SMS client (Hilt, Room, WorkManager, Telephony sync,
-notifications, MMS plans, `data/`/`domain/`/`framework/` packages). **None of that exists.** All of
-it was deleted in commit `b8b7844 "project setup"`, which reset the repo to a fresh scaffold with a
-different DI framework, a different package layout, and no SMS functionality at all.
-
-The current tree is ~15 Kotlin files. Read the source, not the README. The README is useful only as
-a statement of product intent (an SMS/MMS client), and its dependency table, architecture diagram,
-and milestone checklist are all wrong.
-
 ## Build
 
 ```bash
