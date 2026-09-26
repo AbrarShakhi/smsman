@@ -54,8 +54,6 @@ fun chatChrome(threadId: Long) = ScreenChrome(
         val favorites by metadata.observeFavoriteThreadIds().collectAsState(initial = emptySet())
         val isFavorite = threadId in favorites
 
-        // Resolved here rather than read from ChatViewModel: the top bar is rendered by AppRoot's
-        // Scaffold, outside the NavEntry's ViewModel store, so it cannot share that instance.
         val threadTitle by produceState(ThreadTitle("Conversation", null), threadId) {
             value = resolver.resolve(threadId)
         }
@@ -120,10 +118,6 @@ fun chatChrome(threadId: Long) = ScreenChrome(
     },
 )
 
-/**
- * Conversation-level actions. Deletion is confirmed first and is irreversible: the provider holds
- * the only copy, and this app is the SMS role holder, so nothing else will restore it.
- */
 @Composable
 private fun ChatOverflowMenu(
     threadId: Long,

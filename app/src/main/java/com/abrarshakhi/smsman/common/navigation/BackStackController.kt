@@ -8,33 +8,52 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.serialization.json.Json
 
-fun <T> SnapshotStateList<T>.currentRoute() = this.lastOrNull()
+fun SnapshotStateList<AppRouteKey>.currentRoute() = lastOrNull()
 
-fun <T> SnapshotStateList<T>.switchTapTo(destination: T) {
-    this.clear()
-    this.add(destination)
+fun SnapshotStateList<AppRouteKey>.switchTapTo(destination: AppRouteKey) {
+    clear()
+    add(destination)
 }
 
-fun <T> SnapshotStateList<T>.back() {
-    if (size > 1) removeLastOrNull()
+fun SnapshotStateList<AppRouteKey>.back() {
+    removeLastOrNull()
 }
 
-fun <T> SnapshotStateList<T>.navigateTo(destination: T) = this.add(destination)
+fun SnapshotStateList<AppRouteKey>.backOrHome() {
+    if (size > 1) {
+        removeLastOrNull()
+    } else if (lastOrNull() != AppRouteKey.HomeTab) {
+        switchTapTo(AppRouteKey.AllMessages)
+    }
+}
 
-val AppRouteBackStackSaver: Saver<SnapshotStateList<AppRouteKey>, Any> = listSaver(
-    save = { stack -> stack.map { Json.encodeToString<AppRouteKey>(it) } },
-    restore = { saved ->
-        val routes = saved.mapNotNull { encoded ->
-            runCatching { Json.decodeFromString<AppRouteKey>(encoded) }.getOrNull()
-        }
-        mutableStateListOf<AppRouteKey>().apply {
-            addAll(routes.ifEmpty { listOf(AppRouteKey.AllMessages) })
-        }
-    },
-)
+
+fun SnapshotStateList<AppRouteKey>.navigateTo(destination: AppRouteKey) {
+    add(destination)
+}
+
+val AppRouteBackStackSaver: Saver<SnapshotStateList<AppRouteKey>, Any> = listSaver(save = { stack ->
+    stack.map {
+        Json.encodeToString<AppRouteKey>(it)
+    }
+}, restore = { saved ->
+    val routes = saved.mapNotNull { encoded ->
+        runCatching {
+            Json.decodeFromString<AppRouteKey>(encoded)
+        }.getOrNull()
+    }
+
+    mutableStateListOf<AppRouteKey>().apply {
+        addAll(
+            routes.ifEmpty {
+                listOf(AppRouteKey.AllMessages)
+            })
+    }
+})
 
 @Composable
-fun rememberAppBackStack(start: AppRouteKey = AppRouteKey.AllMessages): SnapshotStateList<AppRouteKey> =
-    rememberSaveable(saver = AppRouteBackStackSaver) {
-        mutableStateListOf(start)
-    }
+fun rememberAppBackStack(
+    start: AppRouteKey = AppRouteKey.AllMessages
+): SnapshotStateList<AppRouteKey> = rememberSaveable(saver = AppRouteBackStackSaver) {
+    mutableStateListOf(start)
+}

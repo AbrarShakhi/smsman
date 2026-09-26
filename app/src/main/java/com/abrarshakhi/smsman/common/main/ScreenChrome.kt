@@ -23,11 +23,6 @@ data class ScreenChrome(
     val fab: @Composable (backStack: SnapshotStateList<AppRouteKey>) -> Unit = {},
 )
 
-/**
- * Exhaustive by design: adding an [AppRouteKey] fails to compile until its chrome is declared here.
- * This is the compile-time counterpart to the Koin `navigation<T> {}` registration, which only
- * fails at navigation time.
- */
 fun AppRouteKey.chrome() = when (this) {
     is AppRouteKey.Onboarding -> onboardingChrome()
     is AppRouteKey.AllMessages -> allMessagesChrome()

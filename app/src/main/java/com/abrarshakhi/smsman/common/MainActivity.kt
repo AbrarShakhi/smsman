@@ -27,11 +27,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Resolved once, before the back stack is created: the back stack is saveable, so a later
-        // change is handled by onboarding calling switchTapTo rather than by re-deriving this.
         val startRoute = when {
             !permissionsAndRoleReady(this, roleManager) -> AppRouteKey.Onboarding
-            // Launched by tapping a notification: open that conversation directly.
             else -> intent.threadIdExtra()?.let(AppRouteKey::Chat) ?: AppRouteKey.AllMessages
         }
 
