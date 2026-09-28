@@ -20,9 +20,6 @@ fun AppNavigation(
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
-        // NavDisplay only installs its back handler while previous entries exist, so back at the
-        // root falls through to the system and exits the app. Routed through back() anyway so every
-        // pop in the app goes through the same size-guarded helper.
         onBack = { backStack.back() },
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),

@@ -1,46 +1,74 @@
 package com.abrarshakhi.smsman.common.main
 
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
+import androidx.compose.material.icons.automirrored.outlined.Message
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.HomeMax
+import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.HomeMax
+import androidx.compose.material.icons.outlined.Message
+import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.navigation.AppRouteKey
 import com.abrarshakhi.smsman.common.navigation.currentRoute
 import com.abrarshakhi.smsman.common.navigation.switchTapTo
+import com.abrarshakhi.smsman.common.ui.components.AnimatedTabIcon
 
 private data class HomeTabItem(
     val route: AppRouteKey.HomeTab,
-    @param:DrawableRes val icon: Int,
+    val selectedIcon: ImageVector,
+    val unSelectedIcon: ImageVector,
     @param:StringRes val label: Int,
 )
 
 private val homeTabs = listOf(
-    HomeTabItem(AppRouteKey.AllMessages, R.drawable.ic_tab_messages, R.string.tab_all_messages),
-    HomeTabItem(AppRouteKey.Favorite, R.drawable.ic_tab_favorite, R.string.tab_favorite),
-    HomeTabItem(AppRouteKey.Pinned, R.drawable.ic_tab_pinned, R.string.tab_pinned),
+    HomeTabItem(
+        route = AppRouteKey.AllMessages,
+        selectedIcon = Icons.AutoMirrored.Filled.Message,
+        unSelectedIcon = Icons.AutoMirrored.Outlined.Message, label = R.string.tab_all_messages,
+    ),
+    HomeTabItem(
+        route = AppRouteKey.Favorite,
+        selectedIcon = Icons.Filled.Favorite,
+        unSelectedIcon = Icons.Outlined.FavoriteBorder, label = R.string.tab_favorite,
+    ),
+    HomeTabItem(
+        route = AppRouteKey.Pinned,
+        selectedIcon = Icons.Filled.PushPin,
+        unSelectedIcon = Icons.Outlined.PushPin, label = R.string.tab_pinned,
+    ),
 )
 
-/**
- * Shared by all three [AppRouteKey.HomeTab] chromes. Tabs replace the back stack rather than
- * stacking onto it, so switching tabs never deepens history.
- */
 @Composable
 fun AppBottomBar(backStack: SnapshotStateList<AppRouteKey>) {
     val current = backStack.currentRoute()
-    ShortNavigationBar {
+    NavigationBar {
         homeTabs.forEach { tab ->
             val label = stringResource(tab.label)
-            ShortNavigationBarItem(
-                selected = current == tab.route,
-                onClick = { if (current != tab.route) backStack.switchTapTo(tab.route) },
-                icon = { Icon(painterResource(tab.icon), contentDescription = label) },
+            val selected = current == tab.route
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    if (current != tab.route) backStack.switchTapTo(tab.route)
+                },
+                icon = {
+                    AnimatedTabIcon(
+                        icon = if (selected) tab.selectedIcon else tab.unSelectedIcon,
+                        label = label,
+                        selected = selected,
+                    )
+                },
                 label = { Text(label) },
             )
         }
