@@ -17,30 +17,47 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.ui.theme.fontFamilyFor
+import com.abrarshakhi.smsman.common.util.isDynamicColorSchemeSupported
 import com.abrarshakhi.smsman.core.settings.ColorSchemeOption
 import com.abrarshakhi.smsman.core.settings.FontOption
 import com.abrarshakhi.smsman.core.settings.ThemeMode
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    viewModel: SettingsViewModel,
+    modifier: Modifier = Modifier,
+) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    var showFontPicker by remember { mutableStateOf(false) }
 
-    LazyColumn(modifier.fillMaxSize()) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+    ) {
         item { SectionHeader("Theme") }
         items(ThemeMode.entries.toList()) { mode ->
             OptionRow(
@@ -54,35 +71,43 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
             )
         }
 
-        item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
+        item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+
         item { SectionHeader("Colour scheme") }
+
         item {
             ColorSchemeGrid(
-                selected = settings.colorScheme,
-                onSelect = viewModel::onColorScheme,
+                selected = settings.colorScheme, onSelect = viewModel::onColorScheme
             )
         }
 
-        item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
+        item { HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp)) }
+
         item { SectionHeader("Font") }
-        items(FontOption.entries.toList()) { option ->
-            OptionRow(
-                label = option.label,
-                selected = settings.font == option,
-                onSelect = { viewModel.onFont(option) },
-                // Preview each family in its own face so the choice is legible before applying.
-                labelFamily = fontFamilyFor(option),
-            )
-        }
+
+        item { FontSelector(selected = settings.font, onClick = { showFontPicker = true }) }
+
         item {
             Text(
-                text = "Fonts other than the system default are downloaded on first use and " +
-                    "fall back to the system font if unavailable.",
+                text = stringResource(R.string.setting_font_description),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+
+    if (showFontPicker) {
+        FontPickerDialog(
+            selected = settings.font,
+            onSelect = { font ->
+                viewModel.onFont(font)
+                showFontPicker = false
+            },
+            onDismiss = {
+                showFontPicker = false
+            },
+        )
     }
 }
 
@@ -90,10 +115,109 @@ fun SettingsScreen(viewModel: SettingsViewModel, modifier: Modifier = Modifier) 
 private fun SectionHeader(text: String) {
     Text(
         text = text,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        modifier = Modifier.padding(
+            start = 16.dp,
+            end = 16.dp,
+            top = 16.dp,
+            bottom = 4.dp,
+        ),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
     )
+}
+
+@Composable
+private fun FontSelector(
+    selected: FontOption,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = null,
+        trailingContent = {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "Choose font",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        overlineContent = null,
+        supportingContent = {
+            Text(
+                text = selected.label,
+                fontFamily = fontFamilyFor(selected),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        colors = ListItemDefaults.colors(),
+        content = {
+            Text(
+                text = "Font",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+    )
+}
+
+@Composable
+private fun FontPickerDialog(
+    selected: FontOption,
+    onSelect: (FontOption) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Font")
+        },
+        text = {
+            LazyColumn {
+                items(items = FontOption.entries.toList(), key = { it.name }) { option ->
+                    FontOptionRow(
+                        option = option,
+                        selected = option == selected,
+                        onSelect = { onSelect(option) },
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun FontOptionRow(
+    option: FontOption,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onSelect,
+            )
+            .padding(
+                horizontal = 8.dp,
+                vertical = 8.dp,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onSelect,
+        )
+
+        Text(
+            text = option.label,
+            modifier = Modifier.padding(start = 8.dp),
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontFamily = fontFamilyFor(option),
+            ),
+        )
+    }
 }
 
 @Composable
@@ -106,15 +230,29 @@ private fun OptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .selectable(selected = selected, onClick = onSelect)
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .selectable(
+                selected = selected,
+                onClick = onSelect,
+            )
+            .padding(
+                horizontal = 16.dp,
+                vertical = 4.dp,
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = onSelect)
+        RadioButton(
+            selected = selected,
+            onClick = onSelect,
+        )
+
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge.let {
-                if (labelFamily != null) it.copy(fontFamily = labelFamily) else it
+                if (labelFamily != null) {
+                    it.copy(fontFamily = labelFamily)
+                } else {
+                    it
+                }
             },
             modifier = Modifier.padding(start = 8.dp),
         )
@@ -127,42 +265,59 @@ private fun ColorSchemeGrid(
     onSelect: (ColorSchemeOption) -> Unit,
 ) {
     val options = ColorSchemeOption.entries.toList()
-    Column(Modifier.padding(horizontal = 16.dp)) {
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         options.chunked(6).forEach { row ->
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 row.forEach { option ->
+                    if (!isDynamicColorSchemeSupported() && option == ColorSchemeOption.DYNAMIC) return
                     val isSelected = option == selected
                     Box(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(
-                                option.seed?.let { Color(it) }
-                                    ?: MaterialTheme.colorScheme.primary,
+                                option.seed?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
                             )
                             .border(
                                 width = if (isSelected) 3.dp else 0.dp,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 shape = CircleShape,
                             )
-                            .clickable { onSelect(option) },
+                            .clickable {
+                                onSelect(option)
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
                         if (isSelected) {
-                            Icon(Icons.Filled.Check, contentDescription = option.label, tint = Color.White)
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = option.label,
+                                tint = Color.White,
+                            )
                         } else if (option == ColorSchemeOption.DYNAMIC) {
-                            Text("A", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                text = "A",
+                                color = Color.White,
+                                style = MaterialTheme.typography.labelLarge,
+                            )
                         }
                     }
                 }
             }
         }
+
         Text(
             text = selected.label,
-            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier.padding(
+                top = 4.dp,
+                bottom = 8.dp,
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

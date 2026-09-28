@@ -20,10 +20,6 @@ enum class MessageType {
     }
 }
 
-/**
- * Provider STATUS_* values are GSM TP-Status bits (-1 / 0 / 32 / 64), deliberately not contiguous,
- * so they must never be treated as enum ordinals.
- */
 enum class DeliveryStatus {
     NONE, COMPLETE, PENDING, FAILED;
 

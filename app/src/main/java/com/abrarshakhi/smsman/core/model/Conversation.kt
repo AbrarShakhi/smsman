@@ -15,7 +15,6 @@ data class Conversation(
     val isGroup: Boolean get() = addresses.size > 1
     val isUnread: Boolean get() = unreadCount > 0
 
-    /** Stable per-thread avatar colour slot, so a contact keeps its colour across restarts. */
     val avatarColorIndex: Int get() = (threadId % AVATAR_COLOR_SLOTS).toInt()
 
     companion object {

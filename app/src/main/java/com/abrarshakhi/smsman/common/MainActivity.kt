@@ -4,12 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abrarshakhi.smsman.common.main.AppRoot
 import com.abrarshakhi.smsman.common.main.MainAppViewModel
 import com.abrarshakhi.smsman.common.navigation.AppRouteKey
-import com.abrarshakhi.smsman.common.permissionsAndRoleReady
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abrarshakhi.smsman.common.ui.theme.SmsmanTheme
 import com.abrarshakhi.smsman.core.notification.EXTRA_THREAD_ID
 import com.abrarshakhi.smsman.core.permissions.SmsRoleManager
@@ -24,6 +24,7 @@ class MainActivity : ComponentActivity() {
     private val roleManager: SmsRoleManager by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -35,9 +36,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val mainAppViewModel: MainAppViewModel = koinViewModel()
             val settings by mainAppViewModel.settings.collectAsStateWithLifecycle()
+            splashScreen.setKeepOnScreenCondition { !settings.isLoaded }
             SmsmanTheme(settings = settings) {
-                AppRoot(startRoute = startRoute, mainAppViewModel = mainAppViewModel)
+                AppRoot(startRoute = startRoute)
             }
+
         }
     }
 }

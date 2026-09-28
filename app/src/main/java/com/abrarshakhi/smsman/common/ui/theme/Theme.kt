@@ -1,60 +1,71 @@
 package com.abrarshakhi.smsman.common.ui.theme
 
+import android.content.Context
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import com.abrarshakhi.smsman.common.util.isDynamicColorSchemeSupported
 import com.abrarshakhi.smsman.core.settings.AppSettings
 import com.abrarshakhi.smsman.core.settings.ColorSchemeOption
+import com.abrarshakhi.smsman.core.settings.ColorSchemeOption.DYNAMIC
 import com.abrarshakhi.smsman.core.settings.ThemeMode
+
+
+@RequiresApi(Build.VERSION_CODES.S)
+private fun dynamicColorScheme(isDarkTheme: Boolean, context: Context) =
+    if (isDarkTheme) dynamicDarkColorScheme(context)
+    else dynamicLightColorScheme(context)
+
+@Composable
+private fun WithColorScheme(
+    settingsColorScheme: ColorSchemeOption,
+    settingsThemeMode: ThemeMode,
+    content: @Composable (colorScheme: ColorScheme) -> Unit
+) {
+    val isDarkTheme = when (settingsThemeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+    val context = LocalContext.current
+    val dynamicColorScheme =
+        if (isDynamicColorSchemeSupported() && settingsColorScheme == DYNAMIC) {
+            dynamicColorScheme(isDarkTheme, context)
+        } else {
+            remember(settingsColorScheme, isDarkTheme) {
+                schemeFromSeed(Color(settingsColorScheme.seed!!), isDarkTheme)
+            }
+        }
+    content(dynamicColorScheme)
+}
 
 @Composable
 fun SmsmanTheme(
     settings: AppSettings = AppSettings(),
     content: @Composable () -> Unit,
 ) {
-    val darkTheme = when (settings.themeMode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
-        ThemeMode.LIGHT -> false
-        ThemeMode.DARK -> true
+    WithColorScheme(
+        settings.colorScheme, settings.themeMode
+    ) { colorScheme ->
+        val typography = remember(settings.font) { typographyFor(fontFamilyFor(settings.font)) }
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = typography,
+            content = content,
+        )
     }
-
-    val context = LocalContext.current
-    val colorScheme = when {
-        settings.colorScheme == ColorSchemeOption.DYNAMIC &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-
-        settings.colorScheme == ColorSchemeOption.DYNAMIC ->
-            if (darkTheme) DarkColors else LightColors
-
-        else -> remember(settings.colorScheme, darkTheme) {
-            schemeFromSeed(Color(settings.colorScheme.seed!!), darkTheme)
-        }
-    }
-
-    val typography = remember(settings.font) { typographyFor(fontFamilyFor(settings.font)) }
-
-    MaterialExpressiveTheme(
-        colorScheme = colorScheme,
-        typography = typography,
-        content = content,
-    )
 }
 
-/**
- * Derives a scheme from a seed colour by shifting its lightness, which keeps all twelve options
- * visually consistent without hand-authoring twelve full palettes. Dynamic colour is preferred
- * where available; this covers the explicit choices and API 30.
- */
 private fun schemeFromSeed(seed: Color, dark: Boolean): ColorScheme {
     val hsl = FloatArray(3)
     android.graphics.Color.colorToHSV(seed.toArgb(), hsl)

@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.stateIn
 
 class MainAppViewModel(settingsRepository: SettingsRepository) : ViewModel() {
 
-    /** Drives the theme for the whole application, so a settings change applies immediately. */
     val settings: StateFlow<AppSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppSettings())
 }

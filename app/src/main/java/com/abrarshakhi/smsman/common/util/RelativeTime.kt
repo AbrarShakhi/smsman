@@ -4,12 +4,6 @@ import android.content.Context
 import android.text.format.DateUtils
 import java.util.Calendar
 
-/**
- * Messages-style stamps: time today, weekday this week, date this year, else numeric date.
- *
- * [context] is required: DateUtils reads the user's 12/24-hour preference from it and throws on a
- * null context.
- */
 fun formatConversationTime(
     context: Context,
     timestamp: Long,
@@ -34,10 +28,6 @@ fun formatConversationTime(
     return DateUtils.formatDateTime(context, timestamp, flags)
 }
 
-/**
- * Day dividers name a *day*, never a clock time — reusing [formatConversationTime] here rendered
- * today's divider as "08:11".
- */
 fun formatDayDivider(
     context: Context,
     timestamp: Long,

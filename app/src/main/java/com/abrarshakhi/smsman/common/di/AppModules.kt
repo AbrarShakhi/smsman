@@ -16,11 +16,6 @@ val commonModule = module {
     viewModelOf(::MainAppViewModel)
 }
 
-/**
- * Every feature module registers its own nav entries via `navigation<AppRouteKey.X> { }`.
- * A route missing from this list resolves to Koin's default fallback, which throws
- * `IllegalStateException("Unknown screen ...")` at navigation time rather than at compile time.
- */
 val appModules = listOf(
     commonModule,
     coreModule,

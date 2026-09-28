@@ -4,9 +4,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// Fallback palette for devices without dynamic color (API 30, or dynamic color turned off).
-// Seeded on the Material 3 baseline blue that Google Messages uses.
-
 private val Blue40 = Color(0xFF0B57D0)
 private val Blue80 = Color(0xFFA8C7FA)
 private val Blue90 = Color(0xFFD3E3FD)

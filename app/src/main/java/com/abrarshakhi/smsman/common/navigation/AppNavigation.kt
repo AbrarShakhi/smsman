@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.abrarshakhi.smsman.common.main.MainAppViewModel
+import com.abrarshakhi.smsman.features.conversations.presentation.ConversationsViewModel
 import org.koin.compose.navigation3.koinEntryProvider
 import org.koin.core.annotation.KoinExperimentalAPI
 
@@ -15,7 +15,6 @@ import org.koin.core.annotation.KoinExperimentalAPI
 fun AppNavigation(
     backStack: SnapshotStateList<AppRouteKey>,
     modifier: Modifier = Modifier,
-    mainAppViewModel: MainAppViewModel,
 ) {
     NavDisplay(
         backStack = backStack,
@@ -25,6 +24,6 @@ fun AppNavigation(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
         ),
-        entryProvider = koinEntryProvider<AppRouteKey>(),
+        entryProvider = koinEntryProvider(),
     )
 }

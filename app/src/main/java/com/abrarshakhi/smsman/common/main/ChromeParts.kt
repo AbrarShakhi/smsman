@@ -12,6 +12,6 @@ import com.abrarshakhi.smsman.common.navigation.backOrHome
 @Composable
 fun BackNavigationIcon(backStack: SnapshotStateList<AppRouteKey>) {
     IconButton(onClick = { backStack.backOrHome() }) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
     }
 }

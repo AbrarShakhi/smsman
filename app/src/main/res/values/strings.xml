@@ -9,4 +9,5 @@
 
     <string name="onboarding_title">Set up %1$s</string>
     <string name="onboarding_default_sms_done">%1$s is your default SMS app</string>
+    <string name="setting_font_description">Fonts other than the system default are downloaded on first use and fall back to the system font if unavailable.</string>
 </resources>

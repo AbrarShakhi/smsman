@@ -28,12 +28,11 @@ class SettingsRepository(private val context: Context) {
         context.settingsDataStore.edit { it[key] = value }
     }
 
-    /** Unknown stored values fall back to the default rather than throwing, so a renamed or removed
-     *  option cannot leave the app unable to read its own settings. */
     private fun Preferences.toSettings() = AppSettings(
         themeMode = enumOrDefault(this[KEY_THEME_MODE], ThemeMode.SYSTEM),
         colorScheme = enumOrDefault(this[KEY_COLOR_SCHEME], ColorSchemeOption.DYNAMIC),
         font = enumOrDefault(this[KEY_FONT], FontOption.SYSTEM),
+        isLoaded = true
     )
 
     private inline fun <reified T : Enum<T>> enumOrDefault(stored: String?, default: T): T =

@@ -16,9 +16,12 @@ import com.abrarshakhi.smsman.common.navigation.AppRouteKey
 import com.abrarshakhi.smsman.common.navigation.LocalAppBackStack
 import com.abrarshakhi.smsman.common.navigation.currentRoute
 import com.abrarshakhi.smsman.common.navigation.rememberAppBackStack
+import com.abrarshakhi.smsman.features.conversations.presentation.ConversationsViewModel
 
 @Composable
-fun AppRoot(startRoute: AppRouteKey = AppRouteKey.AllMessages, mainAppViewModel: MainAppViewModel) {
+fun AppRoot(
+    startRoute: AppRouteKey = AppRouteKey.AllMessages,
+) {
     val backStack = rememberAppBackStack(startRoute)
     val current = backStack.currentRoute()
     val currentChrome = current?.chrome()
@@ -43,7 +46,6 @@ fun AppRoot(startRoute: AppRouteKey = AppRouteKey.AllMessages, mainAppViewModel:
             AppNavigation(
                 backStack = backStack,
                 modifier = Modifier.padding(innerPadding),
-                mainAppViewModel = mainAppViewModel,
             )
         }
     }

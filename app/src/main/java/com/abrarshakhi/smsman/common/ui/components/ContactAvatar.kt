@@ -17,16 +17,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/**
- * Deterministic palette so a conversation keeps the same colour across restarts, as Messages does.
- * Addresses are frequently alphanumeric carrier shortcodes ("GP Combo"), so the initial has to
- * cope with letters, digits and non-Latin scripts alike.
- */
 private val AvatarColors = listOf(
     Color(0xFF1A73E8), Color(0xFF12B5CB), Color(0xFF1E8E3E), Color(0xFFE37400),
     Color(0xFFD93025), Color(0xFF9334E6), Color(0xFF3949AB), Color(0xFF00897B),
 )
 
+/**
+ * NOTE: Currently it shows colored avatar, It does not consider contact pictures
+ */
 @Composable
 fun ContactAvatar(
     displayName: String,
@@ -35,8 +33,6 @@ fun ContactAvatar(
     size: Int = 48,
 ) {
     val color = AvatarColors[colorIndex.mod(AvatarColors.size)]
-    // A raw number has no meaningful initial - "+8801521778285" rendered as "+". Unsaved numbers
-    // get a person glyph instead, as Messages does.
     val initial = displayName.trim().firstOrNull { it.isLetter() }?.uppercase()
 
     Box(

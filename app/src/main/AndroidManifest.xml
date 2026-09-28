@@ -3,8 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature
-        android:name="android.hardware.telephony"
-        android:required="false" />
+        android:name="android.hardware.telephony"/>
 
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -15,7 +14,6 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Needed on API 30+ to resolve the current default SMS package at all. -->
     <queries>
         <intent>
             <action android:name="android.provider.Telephony.SMS_DELIVER" />
@@ -36,7 +34,7 @@
         <activity
             android:name=".common.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Smsman"
+            android:theme="@style/Theme.Smsman.Starting"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,7 +42,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Default-SMS-app component 3 of 4: receive send intents from other apps. -->
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
 
@@ -58,8 +55,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Component 1 of 4. BROADCAST_SMS is signature-level and gates who may deliver here,
-             so it belongs on the receiver, never as a <uses-permission>. -->
         <receiver
             android:name=".core.telephony.receiver.SmsDeliverReceiver"
             android:exported="true"
@@ -69,7 +64,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Component 2 of 4. -->
         <receiver
             android:name=".core.telephony.receiver.MmsWapPushReceiver"
             android:exported="true"
@@ -95,7 +89,6 @@
             android:name=".core.notification.MarkReadReceiver"
             android:exported="false" />
 
-        <!-- Component 4 of 4: quick-reply to a declined call. -->
         <service
             android:name=".core.telephony.service.RespondViaMessageService"
             android:exported="true"

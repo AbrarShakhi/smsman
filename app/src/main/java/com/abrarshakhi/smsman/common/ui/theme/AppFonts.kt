@@ -14,15 +14,9 @@ private val provider = GoogleFont.Provider(
     certificates = R.array.com_google_android_gms_fonts_certs,
 )
 
-/**
- * Downloadable fonts resolve asynchronously through Play Services. Each family declares the
- * platform default as its final fallback, so text still renders if the provider is unavailable or
- * the device is offline.
- */
 fun fontFamilyFor(option: FontOption): FontFamily {
     val name = option.googleFontName ?: return FontFamily.Default
     val googleFont = GoogleFont(name)
-    // Positional: the parameter names on this overload changed across versions.
     return FontFamily(
         Font(googleFont, provider, FontWeight.Normal),
         Font(googleFont, provider, FontWeight.Medium),
@@ -30,7 +24,6 @@ fun fontFamilyFor(option: FontOption): FontFamily {
     )
 }
 
-/** Applies [family] across the Material type scale, preserving every other token. */
 fun typographyFor(family: FontFamily): Typography {
     val base = Typography()
     return Typography(
