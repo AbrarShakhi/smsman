@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
             val settings by mainAppViewModel.settings.collectAsStateWithLifecycle()
             splashScreen.setKeepOnScreenCondition { !settings.isLoaded }
             SmsmanTheme(settings = settings) {
-                AppRoot(startRoute = startRoute)
+                AppRoot(startRoute = AppRouteKey.Settings)
             }
 
         }

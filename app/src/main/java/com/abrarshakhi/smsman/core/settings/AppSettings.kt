@@ -1,11 +1,11 @@
 package com.abrarshakhi.smsman.core.settings
 
-import com.abrarshakhi.smsman.common.util.isDynamicColorSchemeSupported
+import com.abrarshakhi.smsman.common.util.defaultColorSchemeOption
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 enum class ColorSchemeOption(val label: String, val seed: Long?) {
-    DYNAMIC("Dynamic (wallpaper)", null), BLUE("Blue", 0xFF0B57D0), INDIGO(
+    DYNAMIC("Dynamic", null), BLUE("Blue", 0xFF0B57D0), INDIGO(
         "Indigo", 0xFF3949AB
     ),
     TEAL("Teal", 0xFF00897B), GREEN("Green", 0xFF1E8E3E), LIME("Lime", 0xFF7CB342), AMBER(
@@ -35,8 +35,7 @@ enum class FontOption(val label: String, val googleFontName: String?) {
 
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val colorScheme: ColorSchemeOption = if (isDynamicColorSchemeSupported()) ColorSchemeOption.DYNAMIC
-    else ColorSchemeOption.BLUE,
+    val colorScheme: ColorSchemeOption = defaultColorSchemeOption(),
     val font: FontOption = FontOption.SYSTEM,
     val isLoaded: Boolean = false
 )

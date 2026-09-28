@@ -1,17 +1,18 @@
 package com.abrarshakhi.smsman.features.settings.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -76,7 +78,7 @@ fun SettingsScreen(
         item { SectionHeader("Colour scheme") }
 
         item {
-            ColorSchemeGrid(
+            ColorSchemeRow(
                 selected = settings.colorScheme, onSelect = viewModel::onColorScheme
             )
         }
@@ -260,66 +262,56 @@ private fun OptionRow(
 }
 
 @Composable
-private fun ColorSchemeGrid(
+private fun ColorSchemeRow(
     selected: ColorSchemeOption,
     onSelect: (ColorSchemeOption) -> Unit,
 ) {
-    val options = ColorSchemeOption.entries.toList()
+    val dynamicBrush = remember {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF4285F4), Color(0xFF34A853), Color(0xFFFBBC05), Color(0xFFEA4335)
+            )
+        )
+    }
 
-    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-        options.chunked(6).forEach { row ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+    LazyRow(modifier = Modifier.padding(horizontal = 16.dp)) {
+        items(ColorSchemeOption.entries.toList()) { option ->
+            if (!isDynamicColorSchemeSupported() && option == ColorSchemeOption.DYNAMIC) return@items
+
+            Box(
+                modifier = Modifier.clickable(onClick = { onSelect(option) }),
+                contentAlignment = Alignment.Center
             ) {
-                row.forEach { option ->
-                    if (!isDynamicColorSchemeSupported() && option == ColorSchemeOption.DYNAMIC) return
-                    val isSelected = option == selected
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(
-                                option.seed?.let { Color(it) } ?: MaterialTheme.colorScheme.primary,
-                            )
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                shape = CircleShape,
-                            )
-                            .clickable {
-                                onSelect(option)
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        if (isSelected) {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = option.label,
-                                tint = Color.White,
-                            )
-                        } else if (option == ColorSchemeOption.DYNAMIC) {
-                            Text(
-                                text = "A",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        }
+                Column(
+                    modifier = Modifier.padding(6.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val baseModifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+
+                    val modifier = if (option == ColorSchemeOption.DYNAMIC) {
+                        baseModifier.background(dynamicBrush)
+                    } else {
+                        baseModifier.background(option.seed?.let { Color(it) }
+                            ?: MaterialTheme.colorScheme.primary)
                     }
+
+                    if (option == selected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            modifier = modifier.padding(10.dp),
+                            contentDescription = "check icon",
+                            tint = Color.White
+                        )
+                    } else {
+                        Box(modifier = modifier)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = option.label, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
-
-        Text(
-            text = selected.label,
-            modifier = Modifier.padding(
-                top = 4.dp,
-                bottom = 8.dp,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
