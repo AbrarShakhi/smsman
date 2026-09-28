@@ -8,10 +8,6 @@ import androidx.core.content.ContextCompat
 
 object SmsPermissions {
 
-    /**
-     * BROADCAST_SMS and BROADCAST_WAP_PUSH are deliberately absent: they are signature-level and
-     * belong on the receivers' `android:permission`, not in a runtime request.
-     */
     val required: List<String> = buildList {
         add(Manifest.permission.READ_SMS)
         add(Manifest.permission.SEND_SMS)
@@ -20,7 +16,6 @@ object SmsPermissions {
         add(Manifest.permission.RECEIVE_WAP_PUSH)
         add(Manifest.permission.READ_CONTACTS)
         add(Manifest.permission.READ_PHONE_STATE)
-        // Only runtime-requestable from API 33; implicitly granted below that.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(Manifest.permission.POST_NOTIFICATIONS)
         }

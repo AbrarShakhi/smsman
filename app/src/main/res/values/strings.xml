@@ -10,4 +10,14 @@
     <string name="onboarding_title">Set up %1$s</string>
     <string name="onboarding_default_sms_done">%1$s is your default SMS app</string>
     <string name="setting_font_description">Fonts other than the system default are downloaded on first use and fall back to the system font if unavailable.</string>
+
+    <string name="onboarding_step_permissions_title">1. Permissions</string>
+    <string name="onboarding_step_permissions_detail">Needed to read messages, contacts and SIM details.</string>
+    <string name="onboarding_step_permissions_granted">Granted</string>
+    <string name="onboarding_step_permissions_action">Grant permissions</string>
+
+    <string name="onboarding_step_sms_title">2. Default SMS app</string>
+    <string name="onboarding_step_sms_detail">Android only lets the default SMS app receive and store messages.</string>
+    <string name="onboarding_step_sms_action">Set as default</string>
+    <string name="onboarding_continue">Continue</string>
 </resources>

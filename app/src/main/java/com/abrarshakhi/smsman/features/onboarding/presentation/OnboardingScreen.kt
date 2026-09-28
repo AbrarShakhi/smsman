@@ -3,32 +3,26 @@ package com.abrarshakhi.smsman.features.onboarding.presentation
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.abrarshakhi.smsman.R
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.navigation.AppRouteKey
 import com.abrarshakhi.smsman.common.navigation.LocalAppBackStack
 import com.abrarshakhi.smsman.common.navigation.switchTapTo
@@ -45,8 +39,6 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
     var permissionsGranted by remember { mutableStateOf(SmsPermissions.allGranted(context)) }
     var isDefaultSmsApp by remember { mutableStateOf(roleManager.isDefaultSmsApp()) }
 
-    // The role can also be changed from system Settings while we are backgrounded, so re-read on
-    // every resume rather than trusting only the activity result.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -69,6 +61,8 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         isDefaultSmsApp = result.resultCode == Activity.RESULT_OK || roleManager.isDefaultSmsApp()
     }
 
+    val appName = stringResource(R.string.app_name)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -76,46 +70,73 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val appName = stringResource(R.string.app_name)
-        Text(
-            text = stringResource(R.string.onboarding_title, appName),
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        Spacer(Modifier.height(24.dp))
-
-        SetupStep(
-            title = "1. Permissions",
-            detail = if (permissionsGranted) {
-                "Granted"
-            } else {
-                "Needed to read messages, contacts and SIM details."
-            },
-            done = permissionsGranted,
-            actionLabel = "Grant permissions",
-            onAction = { permissionLauncher.launch(SmsPermissions.missing(context).toTypedArray()) },
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        SetupStep(
-            title = "2. Default SMS app",
-            detail = if (isDefaultSmsApp) {
-                stringResource(R.string.onboarding_default_sms_done, appName)
-            } else {
-                "Android only lets the default SMS app receive and store messages."
-            },
-            done = isDefaultSmsApp,
-            actionLabel = "Set as default",
-            onAction = { roleManager.requestRoleIntent()?.let(roleLauncher::launch) },
-        )
-
-        Spacer(Modifier.height(32.dp))
-
-        Button(
-            onClick = { backStack.switchTapTo(AppRouteKey.AllMessages) },
-            enabled = permissionsGranted && isDefaultSmsApp,
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Continue")
+            Text(
+                text = stringResource(R.string.onboarding_title, appName),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Let's configure your app to get started.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(32.dp))
+
+            SetupStep(
+                title = stringResource(R.string.onboarding_step_permissions_title),
+                detail = if (permissionsGranted) {
+                    stringResource(R.string.onboarding_step_permissions_granted)
+                } else {
+                    stringResource(R.string.onboarding_step_permissions_detail)
+                },
+                done = permissionsGranted,
+                actionLabel = stringResource(R.string.onboarding_step_permissions_action),
+                onAction = {
+                    permissionLauncher.launch(
+                        SmsPermissions.missing(context).toTypedArray()
+                    )
+                },
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            SetupStep(
+                title = stringResource(R.string.onboarding_step_sms_title),
+                detail = if (isDefaultSmsApp) {
+                    stringResource(R.string.onboarding_default_sms_done, appName)
+                } else {
+                    stringResource(R.string.onboarding_step_sms_detail)
+                },
+                done = isDefaultSmsApp,
+                actionLabel = stringResource(R.string.onboarding_step_sms_action),
+                onAction = { roleManager.requestRoleIntent()?.let(roleLauncher::launch) },
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = { backStack.switchTapTo(AppRouteKey.AllMessages) },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                enabled = permissionsGranted && isDefaultSmsApp,
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Text(
+                    text = stringResource(R.string.onboarding_continue),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
 }
@@ -128,17 +149,75 @@ private fun SetupStep(
     actionLabel: String,
     onAction: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (done) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            }
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                AnimatedVisibility(
+                    visible = done,
+                    enter = scaleIn(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
+                    exit = scaleOut() + fadeOut()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Check,
+                            contentDescription = "Done",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(6.dp))
+
             Text(
-                text = if (done) "$title  ✓" else title,
-                style = MaterialTheme.typography.titleMedium,
+                text = detail,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(4.dp))
-            Text(detail, style = MaterialTheme.typography.bodyMedium)
-            if (!done) {
-                Spacer(Modifier.height(12.dp))
-                Button(onClick = onAction) { Text(actionLabel) }
+
+            AnimatedVisibility(
+                visible = !done,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = onAction,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text(actionLabel)
+                    }
+                }
             }
         }
     }
