@@ -17,7 +17,6 @@ import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.SimDataSource
 import com.abrarshakhi.smsman.core.telephony.SmsSender
 import com.abrarshakhi.smsman.core.telephony.TelephonyChangeObserver
-import kotlinx.coroutines.Dispatchers
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -36,15 +35,15 @@ val coreModule = module {
     single { ConversationsDataSource(androidContext()) }
     single { ContactsDataSource(androidContext()) }
     single { TelephonyChangeObserver(androidContext()) }
-    single { ConversationRepository(get(), get(), get(), get(), Dispatchers.IO) }
+    single { ConversationRepository(get(), get(), get(), get()) }
 
     single { MessagesDataSource(androidContext()) }
     single { SimDataSource(androidContext()) }
-    single { MessageRepository(get(), get(), get(), get(), Dispatchers.IO) }
-    single { ThreadTitleResolver(get(), get(), Dispatchers.IO) }
+    single { MessageRepository(get(), get(), get(), get()) }
+    single { ThreadTitleResolver(get(), get()) }
     single { SmsSender(androidContext()) }
-    single { PinnedRepository(get(), get(), get(), get(), Dispatchers.IO) }
+    single { PinnedRepository(get(), get(), get(), get()) }
     single { MessageNotifier(androidContext()) }
     single { SettingsRepository(androidContext()) }
-    single { SearchRepository(get(), get(), Dispatchers.IO) }
+    single { SearchRepository(get(), get()) }
 }

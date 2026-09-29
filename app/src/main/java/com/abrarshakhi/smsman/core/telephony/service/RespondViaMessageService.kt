@@ -5,11 +5,6 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 
-/**
- * Fourth component required for SMS-role eligibility: lets the dialer offer "reply with message"
- * when declining a call. Registered now so the role can be held; wiring the quick-reply flow comes
- * with the send path.
- */
 class RespondViaMessageService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null

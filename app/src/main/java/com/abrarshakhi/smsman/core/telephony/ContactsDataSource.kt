@@ -3,16 +3,15 @@ package com.abrarshakhi.smsman.core.telephony
 import android.content.Context
 import android.net.Uri
 import android.provider.ContactsContract
-import com.abrarshakhi.smsman.core.model.ContactSuggestion
 import android.util.Log
 import com.abrarshakhi.smsman.core.model.ContactInfo
+import com.abrarshakhi.smsman.core.model.ContactSuggestion
 import java.util.concurrent.ConcurrentHashMap
 
 private const val TAG = "ContactsDataSource"
 
 class ContactsDataSource(private val context: Context) {
 
-    /** Memoised because the same addresses repeat across every thread on every refresh. */
     private val cache = ConcurrentHashMap<String, Optional>()
 
     private class Optional(val value: ContactInfo?)
@@ -28,10 +27,6 @@ class ContactsDataSource(private val context: Context) {
 
     fun invalidate() = cache.clear()
 
-    /**
-     * Contact search for the new-message recipient field. Uses the Phone CONTENT_FILTER_URI, which
-     * matches on both display name and number, so one query serves either kind of input.
-     */
     fun search(query: String, limit: Int = 20): List<ContactSuggestion> {
         if (query.isBlank()) return emptyList()
         val uri = Uri.withAppendedPath(
@@ -75,8 +70,6 @@ class ContactsDataSource(private val context: Context) {
     }
 
     private fun query(address: String): ContactInfo? {
-        // PhoneLookup normalises internally - verified that "+8801586365917" matches a contact
-        // stored as "+880 1586-365917" - so the number must NOT be pre-normalised here.
         val uri = Uri.withAppendedPath(
             ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
             Uri.encode(address),

@@ -1,21 +1,21 @@
 package com.abrarshakhi.smsman.features.conversations.presentation
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -48,7 +49,7 @@ fun ConversationsScreen(
 
     when {
         state.isLoading -> Box(modifier.fillMaxSize(), Alignment.Center) {
-            CircularProgressIndicator()
+            CircularWavyProgressIndicator()
         }
 
         state.error != null -> EmptyMessage(
@@ -59,21 +60,26 @@ fun ConversationsScreen(
         state.conversations.isEmpty() -> EmptyMessage(
             modifier = modifier,
             text = if (favoritesOnly) {
-                "No favourite conversations yet."
+                stringResource(R.string.no_fac_conv_yet)
             } else {
-                "No conversations yet."
+                stringResource(R.string.no_conv_yet)
             },
         )
 
         else -> LazyColumn(
             modifier = modifier.fillMaxSize(),
-            // Clear the extended FAB so the last row is never hidden behind it.
             contentPadding = PaddingValues(bottom = 88.dp),
         ) {
             items(state.conversations, key = { it.threadId }) { conversation ->
                 ConversationRow(
                     conversation = conversation,
-                    onClick = { backStack.navigateTo(AppRouteKey.Chat(conversation.threadId)) },
+                    onClick = {
+                        backStack.navigateTo(
+                            AppRouteKey.Chat(
+                                conversation.threadId
+                            )
+                        )
+                    },
                 )
             }
         }
@@ -97,7 +103,12 @@ private fun ConversationRow(conversation: Conversation, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {},
+                onClickLabel = "open chat",
+                onLongClickLabel = "chat option"
+            )
             .heightIn(min = 72.dp)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -112,8 +123,7 @@ private fun ConversationRow(conversation: Conversation, onClick: () -> Unit) {
             Text(
                 text = conversation.displayName,
                 style = MaterialTheme.typography.bodyLarge,
-                // Unread conversations read heavier, as in Messages.
-                fontWeight = if (conversation.isUnread) FontWeight.Medium else FontWeight.Normal,
+                fontWeight = if (conversation.isUnread) FontWeight.Bold else FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

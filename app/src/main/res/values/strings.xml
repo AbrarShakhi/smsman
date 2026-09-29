@@ -20,4 +20,6 @@
     <string name="onboarding_step_sms_detail">Android only lets the default SMS app receive and store messages.</string>
     <string name="onboarding_step_sms_action">Set as default</string>
     <string name="onboarding_continue">Continue</string>
+    <string name="no_fac_conv_yet">"No favourite conversations yet."</string>
+    <string name="no_conv_yet">""No conversations yet.""</string>
 </resources>

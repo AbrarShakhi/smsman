@@ -9,11 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
-/**
- * The favourite/pin state that the Telephony provider has no room for. Everything here is keyed by
- * provider ids, and callers must tolerate ids that no longer resolve: a pinned message can be
- * deleted by another SMS app, leaving a dangling row until [prunePins] clears it.
- */
 class MessageMetadataRepository(
     private val conversationMetaDao: ConversationMetaDao,
     private val messageMetaDao: MessageMetaDao,
@@ -51,13 +46,11 @@ class MessageMetadataRepository(
 
     suspend fun unpin(messageId: Long) = messageMetaDao.unpin(messageId)
 
-    /** Clears metadata for a conversation that no longer exists. */
     suspend fun forgetThread(threadId: Long) {
         conversationMetaDao.delete(threadId)
         messageMetaDao.prune(messageMetaDao.observePinnedIdsInThread(threadId).first())
     }
 
-    /** Called with the pinned ids that the provider no longer returns. */
     suspend fun prunePins(missingMessageIds: List<Long>) {
         if (missingMessageIds.isNotEmpty()) messageMetaDao.prune(missingMessageIds)
     }

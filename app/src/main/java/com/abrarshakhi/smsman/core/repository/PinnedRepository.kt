@@ -5,6 +5,7 @@ import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import com.abrarshakhi.smsman.core.telephony.MessagesDataSource
 import com.abrarshakhi.smsman.core.telephony.TelephonyChangeObserver
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -20,14 +21,7 @@ class PinnedRepository(
     private val contacts: ContactsDataSource,
     private val metadata: MessageMetadataRepository,
     private val changes: TelephonyChangeObserver,
-    private val ioDispatcher: CoroutineDispatcher,
 ) {
-
-    /**
-     * Pins are stored as bare provider ids, so each refresh re-resolves them and drops any whose
-     * message has since been deleted elsewhere. Without that, the tab would show rows that no
-     * longer exist and the Room table would grow indefinitely.
-     */
     fun observePinned(): Flow<List<PinnedMessage>> =
         combine(
             metadata.observeAllPinned(),
@@ -52,5 +46,5 @@ class PinnedRepository(
                     pinnedAt = pin.pinnedAt,
                 )
             }
-        }.flowOn(ioDispatcher)
+        }.flowOn(Dispatchers.IO)
 }

@@ -26,15 +26,14 @@ class ConversationsViewModel(
 
     init {
         viewModelScope.launch {
-            repository.observeConversations(favoritesOnly)
-                .catch { throwable ->
+            repository.observeConversations(favoritesOnly).catch { throwable ->
                     _state.value = ConversationsState(
                         isLoading = false,
                         error = throwable.message ?: "Could not read messages",
                     )
-                }
-                .collect { conversations ->
-                    _state.value = ConversationsState(conversations = conversations, isLoading = false)
+                }.collect { conversations ->
+                    _state.value =
+                        ConversationsState(conversations = conversations, isLoading = false)
                 }
         }
     }
