@@ -3,16 +3,42 @@ package com.abrarshakhi.smsman.features.onboarding.presentation
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,8 +99,7 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth(), verticalArrangement = Arrangement.Center
         ) {
             Text(
                 text = stringResource(R.string.onboarding_title, appName),
@@ -128,7 +153,9 @@ fun OnboardingScreen(modifier: Modifier = Modifier) {
         ) {
             Button(
                 onClick = { backStack.switchTapTo(AppRouteKey.AllMessages) },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 enabled = permissionsGranted && isDefaultSmsApp,
                 shape = MaterialTheme.shapes.medium
             ) {
@@ -150,15 +177,13 @@ private fun SetupStep(
     onAction: () -> Unit,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
+        modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
             containerColor = if (done) {
                 MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
             } else {
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             }
-        ),
-        shape = MaterialTheme.shapes.large
+        ), shape = MaterialTheme.shapes.large
     ) {
         Column(Modifier.padding(20.dp)) {
             Row(
@@ -210,8 +235,7 @@ private fun SetupStep(
                 Column {
                     Spacer(Modifier.height(16.dp))
                     Button(
-                        onClick = onAction,
-                        colors = ButtonDefaults.buttonColors(
+                        onClick = onAction, colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {

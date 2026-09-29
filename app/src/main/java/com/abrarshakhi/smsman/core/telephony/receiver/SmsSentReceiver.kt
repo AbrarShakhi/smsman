@@ -14,10 +14,6 @@ import com.abrarshakhi.smsman.core.telephony.EXTRA_PART_INDEX
 
 private const val TAG = "SmsSentReceiver"
 
-/**
- * Moves an OUTBOX row to SENT or FAILED. Fires once per message part, so the first failure wins and
- * later successes must not overwrite it.
- */
 class SmsSentReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -32,7 +28,6 @@ class SmsSentReceiver : BroadcastReceiver() {
         val pending = goAsync()
         try {
             if (succeeded) {
-                // Only promote to SENT if nothing has already marked it failed.
                 val current = currentType(context, uri)
                 if (current != Telephony.Sms.MESSAGE_TYPE_FAILED) {
                     update(context, uri, Telephony.Sms.MESSAGE_TYPE_SENT, null)
@@ -59,10 +54,6 @@ class SmsSentReceiver : BroadcastReceiver() {
         context.contentResolver.update(uri, values, null, null)
     }
 
-    /**
-     * Only the nine codes that exist on every supported platform are named. compileSdk 37 adds
-     * around thirty more that API 31 cannot produce, so this must never be an exhaustive `when`.
-     */
     private fun errorName(code: Int): String = when (code) {
         SmsManager.RESULT_ERROR_GENERIC_FAILURE -> "GENERIC_FAILURE"
         SmsManager.RESULT_ERROR_RADIO_OFF -> "RADIO_OFF"

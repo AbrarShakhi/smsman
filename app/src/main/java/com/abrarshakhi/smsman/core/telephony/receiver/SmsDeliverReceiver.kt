@@ -8,27 +8,21 @@ import android.provider.Telephony
 import android.telephony.SmsMessage
 import android.telephony.SubscriptionManager
 import android.util.Log
+import com.abrarshakhi.smsman.core.notification.MessageNotifier
+import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import com.abrarshakhi.smsman.core.notification.MessageNotifier
-import com.abrarshakhi.smsman.core.telephony.ContactsDataSource
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 private const val TAG = "SmsDeliverReceiver"
 
-/** Legacy extra the telephony stack puts on SMS_DELIVER; not exposed as a public constant. */
 private const val EXTRA_SUBSCRIPTION = "subscription"
 
 private val receiverScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-/**
- * Once this app holds the SMS role the platform **stops writing inbound SMS to the provider** and
- * delivers SMS_DELIVER here instead — persisting the message becomes our responsibility. If this
- * receiver did nothing, every incoming text would be silently lost.
- */
 class SmsDeliverReceiver : BroadcastReceiver(), KoinComponent {
 
     private val notifier: MessageNotifier by inject()
@@ -64,7 +58,6 @@ class SmsDeliverReceiver : BroadcastReceiver(), KoinComponent {
     private fun persist(context: Context, parts: Array<SmsMessage>, subId: Int) {
         val head = parts.first()
         val address = head.displayOriginatingAddress ?: head.originatingAddress
-        // Multipart SMS arrives as several PDUs that make up one logical message.
         val body = parts.joinToString(separator = "") { it.displayMessageBody.orEmpty() }
 
         val values = ContentValues().apply {
@@ -81,14 +74,16 @@ class SmsDeliverReceiver : BroadcastReceiver(), KoinComponent {
                 put(Telephony.Sms.SUBSCRIPTION_ID, subId)
             }
             if (!address.isNullOrBlank()) {
-                put(Telephony.Sms.THREAD_ID, Telephony.Threads.getOrCreateThreadId(context, address))
+                put(
+                    Telephony.Sms.THREAD_ID,
+                    Telephony.Threads.getOrCreateThreadId(context, address)
+                )
             }
         }
 
         val uri = context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
         Log.i(TAG, "Persisted inbound SMS (${parts.size} part(s), subId=$subId) as $uri")
 
-        // Storing the message is not enough: as the default SMS app nothing else will tell the user.
         if (!address.isNullOrBlank()) {
             val threadId = Telephony.Threads.getOrCreateThreadId(context, address)
             notifier.notifyIncoming(

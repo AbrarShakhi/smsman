@@ -114,9 +114,6 @@ fun NewMessageScreen(viewModel: NewMessageViewModel, modifier: Modifier = Modifi
 
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainer,
-            // No imePadding() here: AppRoot's Scaffold uses WindowInsets.safeDrawing, which
-        // already includes the IME inset, so adding it again lifted the bar by twice the
-        // keyboard height.
         modifier = Modifier.fillMaxWidth(),
         ) {
             Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
@@ -167,7 +164,6 @@ fun NewMessageScreen(viewModel: NewMessageViewModel, modifier: Modifier = Modifi
                     FilledIconButton(
                         onClick = {
                             viewModel.onSend { threadId ->
-                                // Replace this screen with the thread it created.
                                 backStack.back()
                                 backStack.navigateTo(AppRouteKey.Chat(threadId))
                             }

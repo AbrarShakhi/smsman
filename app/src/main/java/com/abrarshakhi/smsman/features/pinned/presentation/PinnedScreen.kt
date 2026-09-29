@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,8 +41,8 @@ fun PinnedScreen(viewModel: PinnedViewModel, modifier: Modifier = Modifier) {
     val backStack = LocalAppBackStack.current
 
     when {
-        state.isLoading -> Box(modifier.fillMaxSize(), Alignment.Center) {
-            CircularWavyProgressIndicator()
+        state.isLoading -> Box(modifier.fillMaxSize(), Alignment.TopStart) {
+            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
         state.error != null -> Box(modifier.fillMaxSize(), Alignment.Center) {

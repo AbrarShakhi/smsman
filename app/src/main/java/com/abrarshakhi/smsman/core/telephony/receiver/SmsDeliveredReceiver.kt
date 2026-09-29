@@ -12,10 +12,6 @@ import com.abrarshakhi.smsman.core.telephony.EXTRA_MESSAGE_ID
 
 private const val TAG = "SmsDeliveredReceiver"
 
-/**
- * Delivery reports depend on carrier support and frequently never arrive, so nothing in the UI may
- * block on one — a message is usable at SENT and this only upgrades it to delivered.
- */
 class SmsDeliveredReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {

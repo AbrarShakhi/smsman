@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,8 +43,8 @@ fun SearchScreen(viewModel: SearchViewModel, modifier: Modifier = Modifier) {
     when {
         state.query.isBlank() -> Centered(modifier, "Search messages and contacts")
 
-        state.isSearching -> Box(modifier.fillMaxSize(), Alignment.Center) {
-            CircularProgressIndicator()
+        state.isSearching -> Box(modifier.fillMaxSize(), Alignment.TopStart) {
+            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
         state.results.isEmpty -> Centered(modifier, "No results for \"${state.query}\"")
@@ -80,7 +80,11 @@ fun SearchScreen(viewModel: SearchViewModel, modifier: Modifier = Modifier) {
 @Composable
 private fun Centered(modifier: Modifier, text: String) {
     Box(modifier.fillMaxSize(), Alignment.Center) {
-        Text(text, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -97,7 +101,9 @@ private fun SectionHeader(text: String) {
 @Composable
 private fun PersonRow(person: ContactSuggestion, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -117,7 +123,9 @@ private fun PersonRow(person: ContactSuggestion, onClick: () -> Unit) {
 @Composable
 private fun MessageHitRow(hit: MessageHit, timestamp: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.Top,
     ) {

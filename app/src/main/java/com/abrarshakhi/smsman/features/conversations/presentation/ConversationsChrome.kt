@@ -1,6 +1,7 @@
 package com.abrarshakhi.smsman.features.conversations.presentation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -18,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import com.abrarshakhi.smsman.R
@@ -48,7 +48,7 @@ fun allMessagesChrome() = ScreenChrome(
             onClick = { backStack.navigateTo(AppRouteKey.NewMessage) },
             icon = {
                 Icon(
-                    painterResource(R.drawable.ic_tab_messages),
+                    Icons.AutoMirrored.Filled.Message,
                     contentDescription = null,
                 )
             },

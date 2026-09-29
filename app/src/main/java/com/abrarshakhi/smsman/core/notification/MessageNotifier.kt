@@ -28,7 +28,7 @@ class MessageNotifier(private val context: Context) {
 
         val notification =
             NotificationCompat.Builder(context, NotificationChannels.INCOMING_MESSAGES)
-                .setSmallIcon(R.drawable.ic_tab_messages).setStyle(style)
+                .setSmallIcon(R.drawable.ic_launcher_foreground).setStyle(style)
                 .setContentTitle(senderLabel).setContentText(body)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true)
@@ -68,8 +68,9 @@ class MessageNotifier(private val context: Context) {
             intent,
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        return NotificationCompat.Action.Builder(R.drawable.ic_tab_messages, "Reply", pending)
-            .addRemoteInput(RemoteInput.Builder(KEY_REPLY_TEXT).setLabel("Reply").build())
+        return NotificationCompat.Action.Builder(
+            R.drawable.ic_launcher_monochrome, "Reply", pending
+        ).addRemoteInput(RemoteInput.Builder(KEY_REPLY_TEXT).setLabel("Reply").build())
             .setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_REPLY)
             .setAllowGeneratedReplies(true).build()
     }
@@ -86,9 +87,7 @@ class MessageNotifier(private val context: Context) {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         return NotificationCompat.Action.Builder(
-            R.drawable.ic_tab_messages,
-            "Mark as read",
-            pending
+            R.drawable.ic_launcher_monochrome, "Mark as read", pending
         ).setSemanticAction(NotificationCompat.Action.SEMANTIC_ACTION_MARK_AS_READ)
             .setShowsUserInterface(false).build()
     }

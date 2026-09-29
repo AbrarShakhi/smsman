@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -25,10 +27,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.main.BackNavigationIcon
 import com.abrarshakhi.smsman.common.main.ScreenChrome
 import com.abrarshakhi.smsman.common.navigation.back
@@ -88,25 +88,31 @@ fun chatChrome(threadId: Long) = ScreenChrome(
                 }
             },
             actions = {
-                IconButton(onClick = { scope.launch { metadata.setFavorite(threadId, !isFavorite) } }) {
+                IconButton(onClick = {
+                    scope.launch {
+                        metadata.setFavorite(
+                            threadId, !isFavorite
+                        )
+                    }
+                }) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_tab_favorite),
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = if (isFavorite) "Remove favourite" else "Add favourite",
-                        tint = if (isFavorite) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
                     )
                 }
                 ChatOverflowMenu(
                     threadId = threadId,
                     isFavorite = isFavorite,
-                    onToggleFavorite = { scope.launch { metadata.setFavorite(threadId, !isFavorite) } },
+                    onToggleFavorite = {
+                        scope.launch {
+                            metadata.setFavorite(
+                                threadId, !isFavorite
+                            )
+                        }
+                    },
                     onMarkUnread = {
                         scope.launch {
                             withContext(Dispatchers.IO) { messages.markThreadUnread(threadId) }
-                            // Leaving immediately is the point: staying would re-mark it read.
                             backStack.back()
                         }
                     },

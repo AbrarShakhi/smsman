@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Telephony
 import android.telephony.SmsManager
 import android.telephony.SubscriptionManager
@@ -22,53 +23,51 @@ data class SentMessage(val messageId: Long, val threadId: Long)
 
 class SmsSender(private val context: Context) {
 
-    /**
-     * Writes the outgoing message to the provider, then hands it to the radio.
-     *
-     * As the default SMS app we own provider writes, so the row is inserted as OUTBOX up front
-     * (the UI can show "Sending") and moved to SENT or FAILED by [SmsSentReceiver].
-     */
-    fun send(address: String, body: String, subscriptionId: Int): Result<SentMessage> = runCatching {
-        require(address.isNotBlank()) { "No recipient" }
-        require(body.isNotEmpty()) { "Empty message" }
+    fun send(address: String, body: String, subscriptionId: Int): Result<SentMessage> =
+        runCatching {
+            require(address.isNotBlank()) { "No recipient" }
+            require(body.isNotEmpty()) { "Empty message" }
 
-        val threadId = Telephony.Threads.getOrCreateThreadId(context, address)
-        val messageId = insertOutbox(address, body, subscriptionId, threadId)
+            val threadId = Telephony.Threads.getOrCreateThreadId(context, address)
+            val messageId = insertOutbox(address, body, subscriptionId, threadId)
 
-        val smsManager = smsManagerFor(subscriptionId)
-        val parts = smsManager.divideMessage(body)
+            val smsManager = smsManagerFor(subscriptionId)
+            val parts = smsManager.divideMessage(body)
 
-        val sentIntents = ArrayList<PendingIntent>(parts.size)
-        val deliveredIntents = ArrayList<PendingIntent>(parts.size)
-        parts.indices.forEach { index ->
-            sentIntents += statusIntent(SmsSentReceiver::class.java, messageId, index, parts.size)
-            deliveredIntents += statusIntent(
-                SmsDeliveredReceiver::class.java, messageId, index, parts.size,
-            )
-        }
+            val sentIntents = ArrayList<PendingIntent>(parts.size)
+            val deliveredIntents = ArrayList<PendingIntent>(parts.size)
+            parts.indices.forEach { index ->
+                sentIntents += statusIntent(
+                    SmsSentReceiver::class.java, messageId, index, parts.size
+                )
+                deliveredIntents += statusIntent(
+                    SmsDeliveredReceiver::class.java, messageId, index, parts.size,
+                )
+            }
 
-        if (parts.size == 1) {
-            smsManager.sendTextMessage(
-                address, null, body, sentIntents.first(), deliveredIntents.first(),
-            )
-        } else {
-            // The 5-arg overload takes ArrayList, not List - a listOf(...) will not compile here.
-            smsManager.sendMultipartTextMessage(
-                address, null, parts, sentIntents, deliveredIntents,
-            )
-        }
-        Log.i(TAG, "Sent message $messageId in ${parts.size} part(s) on subId=$subscriptionId")
-        SentMessage(messageId = messageId, threadId = threadId)
-    }.onFailure { Log.e(TAG, "Send failed", it) }
+            if (parts.size == 1) {
+                smsManager.sendTextMessage(
+                    address, null, body, sentIntents.first(), deliveredIntents.first(),
+                )
+            } else {
+                smsManager.sendMultipartTextMessage(
+                    address, null, parts, sentIntents, deliveredIntents,
+                )
+            }
+            Log.i(TAG, "Sent message $messageId in ${parts.size} part(s) on subId=$subscriptionId")
+            SentMessage(messageId = messageId, threadId = threadId)
+        }.onFailure { Log.e(TAG, "Send failed", it) }
 
     private fun smsManagerFor(subscriptionId: Int): SmsManager {
         val manager = context.getSystemService(SmsManager::class.java)
-        // getDefault() is deprecated and documented as unpredictable on multi-SIM devices, so an
-        // explicit subscription is always preferred when we have one.
         return if (subscriptionId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
             manager
         } else {
-            manager.createForSubscriptionId(subscriptionId)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) manager.createForSubscriptionId(
+                subscriptionId
+            ) else {
+                @Suppress("DEPRECATION") SmsManager.getSmsManagerForSubscriptionId(subscriptionId)
+            }
         }
     }
 

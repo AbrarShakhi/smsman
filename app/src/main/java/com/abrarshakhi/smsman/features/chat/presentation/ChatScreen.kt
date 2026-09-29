@@ -2,6 +2,7 @@ package com.abrarshakhi.smsman.features.chat.presentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,28 +18,28 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,14 +47,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.common.util.formatDayDivider
 import com.abrarshakhi.smsman.core.model.DeliveryStatus
 import com.abrarshakhi.smsman.core.model.Message
@@ -67,20 +66,19 @@ import java.util.Date
 fun ChatScreen(
     viewModel: ChatViewModel,
     highlightMessageId: Long? = null,
-    modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     when {
-        state.isLoading -> Box(modifier.fillMaxSize(), Alignment.Center) {
-            CircularProgressIndicator()
+        state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.TopStart) {
+            LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
         }
 
-        state.error != null -> Box(modifier.fillMaxSize(), Alignment.Center) {
+        state.error != null -> Box(Modifier.fillMaxSize(), Alignment.Center) {
             Text(state.error ?: "", color = MaterialTheme.colorScheme.error)
         }
 
-        else -> Column(modifier.fillMaxSize()) {
+        else -> Column(Modifier.fillMaxSize()) {
             if (state.inSelectionMode) {
                 SelectionBar(
                     count = state.selectedIds.size,
@@ -90,12 +88,9 @@ fun ChatScreen(
                     onClose = viewModel::onClearSelection,
                 )
             }
-
-            // Expanded detail is per-message and deliberately survives rotation.
             var expandedId by rememberSaveable { mutableLongStateOf(-1L) }
             val listState = rememberLazyListState()
 
-            // Arriving from the Pinned tab: jump to the pinned message and open its details.
             LaunchedEffect(highlightMessageId, state.items) {
                 if (highlightMessageId == null) return@LaunchedEffect
                 val index = state.items.indexOfFirst {
@@ -109,8 +104,9 @@ fun ChatScreen(
 
             LazyColumn(
                 state = listState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                // Newest-first data + reverseLayout opens the thread at the latest message.
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
                 reverseLayout = true,
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
@@ -129,7 +125,9 @@ fun ChatScreen(
             state.sendError?.let { error ->
                 Text(
                     text = error,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -172,7 +170,6 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
                     isMultiSim = isMultiSim,
                     sims = sims,
                     isSelected = item.message.id in selectedIds,
-                    // Once selection is active a plain tap extends it, as in Messages.
                     onClick = {
                         if (inSelectionMode) onToggleSelection(item.message)
                         else onToggle(item.message.id)
@@ -188,7 +185,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(
 private fun DayDivider(timestamp: Long) {
     val context = LocalContext.current
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp, horizontal = 16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         HorizontalDivider(Modifier.weight(1f))
@@ -218,7 +217,6 @@ private fun MessageBubble(
     val corner = 18.dp
     val tail = 4.dp
 
-    // The corner adjacent to the tail is tightened, and only the last bubble of a run gets one.
     val shape = if (outgoing) {
         RoundedCornerShape(corner, corner, if (row.isLastInGroup) tail else corner, corner)
     } else {
@@ -243,7 +241,7 @@ private fun MessageBubble(
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (message.isPinned) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_tab_pinned),
+                    imageVector = Icons.Filled.PushPin,
                     contentDescription = "Pinned",
                     modifier = Modifier.size(14.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -275,7 +273,6 @@ private fun MessageBubble(
 
         }
 
-        // Which SIM carried this message, shown once per visual group to avoid repetition.
         if (isMultiSim && row.isLastInGroup) {
             val sim = sims.firstOrNull { it.subscriptionId == message.subscriptionId }
             Text(
@@ -286,7 +283,6 @@ private fun MessageBubble(
             )
         }
 
-        // Everything an SMS app knows about the message, revealed on tap so the default view stays clean.
         AnimatedVisibility(visible = isExpanded) {
             MessageDetails(message = message, isMultiSim = isMultiSim, sims = sims)
         }
@@ -299,9 +295,11 @@ private fun MessageDetails(message: Message, isMultiSim: Boolean, sims: List<Sim
         sims.firstOrNull { it.subscriptionId == message.subscriptionId }
     }
     val parts = buildList {
-        add(DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(message.date)))
+        add(
+            DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
+                .format(Date(message.date))
+        )
         if (isMultiSim) {
-            // A removed SIM still appears in old rows, so fall back rather than showing nothing.
             add(sim?.let { "SIM ${it.slotIndex + 1} · ${it.label}" } ?: "Unknown SIM")
         }
         statusLabel(message)?.let(::add)
@@ -343,17 +341,12 @@ private fun ComposeBar(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
-        // No imePadding() here: AppRoot's Scaffold uses WindowInsets.safeDrawing, which
-        // already includes the IME inset, so adding it again lifted the bar by twice the
-        // keyboard height.
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            // Only surfaced once it matters: a second segment costs another message.
             if (segments.segments > 1) {
                 Text(
-                    text = "${segments.segments} messages · ${segments.remainingInSegment} left" +
-                        if (segments.isUnicode) " · Unicode" else "",
+                    text = "${segments.segments} messages · ${segments.remainingInSegment} left" + if (segments.isUnicode) " · Unicode" else "",
                     modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -368,7 +361,9 @@ private fun ComposeBar(
                     Box {
                         AssistChip(
                             onClick = { simMenuOpen = true },
-                            label = { Text(selectedSim?.let { "SIM ${it.slotIndex + 1}" } ?: "SIM") },
+                            label = {
+                                Text(selectedSim?.let { "SIM ${it.slotIndex + 1}" } ?: "SIM")
+                            },
                             modifier = Modifier.padding(bottom = 4.dp),
                         )
                         DropdownMenu(
@@ -419,9 +414,13 @@ private fun SelectionBar(
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
 
-    Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onClose) {
@@ -434,7 +433,7 @@ private fun SelectionBar(
             )
             IconButton(onClick = onPin) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_tab_pinned),
+                    imageVector = Icons.Filled.PushPin,
                     contentDescription = if (pinAction) "Pin" else "Unpin",
                 )
             }
