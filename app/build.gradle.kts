@@ -59,7 +59,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
-    buildTypes { release { optimization { enable = false } } }
+    buildTypes { release { optimization { enable = true } } }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -72,6 +72,5 @@ kotlin {
 }
 
 room {
-    // Exported schemas are what make future migrations reviewable and testable.
     schemaDirectory("$projectDir/schemas")
 }
