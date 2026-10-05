@@ -21,7 +21,7 @@
     </queries>
 
     <application
-        android:name=".common.SmsmanApplication"
+        android:name=".SmsmanApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -32,7 +32,7 @@
         android:theme="@style/Theme.Smsman">
 
         <activity
-            android:name=".common.MainActivity"
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Smsman.Starting"
             android:windowSoftInputMode="adjustResize">
@@ -56,7 +56,7 @@
         </activity>
 
         <receiver
-            android:name=".core.telephony.receiver.SmsDeliverReceiver"
+            android:name=".sms.receiver.SmsDeliverReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
@@ -65,7 +65,7 @@
         </receiver>
 
         <receiver
-            android:name=".core.telephony.receiver.MmsWapPushReceiver"
+            android:name=".sms.receiver.MmsWapPushReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
@@ -76,21 +76,21 @@
         </receiver>
 
         <receiver
-            android:name=".core.telephony.receiver.SmsSentReceiver"
+            android:name=".sms.receiver.SmsSentReceiver"
             android:exported="false" />
         <receiver
-            android:name=".core.telephony.receiver.SmsDeliveredReceiver"
+            android:name=".sms.receiver.SmsDeliveredReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".core.notification.NotificationReplyReceiver"
+            android:name=".notification.NotificationReplyReceiver"
             android:exported="false" />
         <receiver
-            android:name=".core.notification.MarkReadReceiver"
+            android:name=".notification.MarkReadReceiver"
             android:exported="false" />
 
         <service
-            android:name=".core.telephony.service.RespondViaMessageService"
+            android:name=".sms.service.RespondViaMessageService"
             android:exported="true"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE"
             tools:ignore="ExportedService">

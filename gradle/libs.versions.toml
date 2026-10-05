@@ -18,6 +18,8 @@ koin = "4.2.2"
 datastorePreferences = "1.2.1"
 kotlinxSerialization = "1.11.0"
 room = "2.8.5"
+lottie = "6.7.1"
+materialKolor = "5.0.1"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -50,6 +52,8 @@ androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-
 lifecycle-viewmodel-navigation3 = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewModelNav3" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-androidx-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

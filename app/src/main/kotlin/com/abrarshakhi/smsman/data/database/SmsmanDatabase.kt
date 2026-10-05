@@ -1,0 +1,22 @@
+package com.abrarshakhi.smsman.data.database
+
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import com.abrarshakhi.smsman.data.database.dao.ConversationMetaDao
+import com.abrarshakhi.smsman.data.database.dao.MessageMetaDao
+import com.abrarshakhi.smsman.data.database.entity.ConversationMetaEntity
+import com.abrarshakhi.smsman.data.database.entity.MessageMetaEntity
+
+@Database(
+    entities = [ConversationMetaEntity::class, MessageMetaEntity::class],
+    version = 1,
+    exportSchema = true,
+)
+abstract class SmsmanDatabase : RoomDatabase() {
+    abstract fun conversationMetaDao(): ConversationMetaDao
+    abstract fun messageMetaDao(): MessageMetaDao
+
+    companion object {
+        const val NAME = "smsman.db"
+    }
+}
