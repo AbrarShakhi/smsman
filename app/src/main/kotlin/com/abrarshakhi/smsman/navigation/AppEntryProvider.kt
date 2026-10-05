@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.abrarshakhi.smsman.ui.chat.ChatRoute
 import com.abrarshakhi.smsman.ui.conversations.ConversationsRoute
+import com.abrarshakhi.smsman.ui.document.DocumentRoute
 import com.abrarshakhi.smsman.ui.newmessage.NewMessageRoute
 import com.abrarshakhi.smsman.ui.pinned.PinnedRoute
 import com.abrarshakhi.smsman.ui.search.SearchRoute
@@ -69,6 +70,17 @@ fun appEntryProvider(navigator: Navigator): (NavKey) -> NavEntry<NavKey> = entry
     }
 
     entry<AppRouteKey.Settings> {
-        SettingsRoute(onBack = navigator::goBack)
+        SettingsRoute(
+            onBack = navigator::goBack,
+            onOpenDocument = { document -> navigator.navigate(AppRouteKey.Document(document)) },
+        )
+    }
+
+    entry<AppRouteKey.Document> { key ->
+        DocumentRoute(
+            document = key.document,
+            onBack = navigator::goBack,
+            onOpenDocument = { document -> navigator.navigate(AppRouteKey.Document(document)) },
+        )
     }
 }

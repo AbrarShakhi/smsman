@@ -1,8 +1,6 @@
 package com.abrarshakhi.smsman.ui.settings
 
 import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -27,9 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Wallpaper
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -56,7 +52,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -66,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.abrarshakhi.smsman.R
+import com.abrarshakhi.smsman.model.AppDocument
 import com.abrarshakhi.smsman.model.AppSettings
 import com.abrarshakhi.smsman.model.ColorSchemeOption
 import com.abrarshakhi.smsman.model.FontOption
@@ -80,14 +76,18 @@ import com.abrarshakhi.smsman.ui.theme.fontFamilyFor
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SettingsRoute(onBack: () -> Unit) {
-    SettingsScreen(viewModel = koinViewModel(), onBack = onBack)
+fun SettingsRoute(
+    onBack: () -> Unit,
+    onOpenDocument: (AppDocument) -> Unit,
+) {
+    SettingsScreen(viewModel = koinViewModel(), onBack = onBack, onOpenDocument = onOpenDocument)
 }
 
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
+    onOpenDocument: (AppDocument) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -122,7 +122,9 @@ fun SettingsScreen(
                     onOpenFontPicker = { showFontPicker = true },
                 )
             }
-            item(key = "about") { AboutGroup() }
+            item(key = "about") { AboutGroup(onOpenDocument = onOpenDocument) }
+            item(key = "open_source") { OpenSourceGroup() }
+            item(key = "legal") { LegalGroup(onOpenDocument = onOpenDocument) }
         }
     }
 
@@ -191,42 +193,7 @@ private fun AppearanceGroup(
 }
 
 @Composable
-private fun AboutGroup() {
-    val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
-    val versionName = remember(context) { context.versionName() }
-
-    ListGroup(title = stringResource(R.string.settings_about)) {
-        ListGroupItem {
-            SettingTitle(
-                title = stringResource(R.string.settings_version, stringResource(R.string.app_name), versionName),
-                supporting = stringResource(R.string.settings_version_summary),
-            )
-        }
-        ListGroupItem(onClick = { runCatching { uriHandler.openUri(SOURCE_CODE_URL) } }) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Rounded.Code, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Box(modifier = Modifier.weight(1f)) {
-                    SettingTitle(
-                        title = stringResource(R.string.settings_source_code),
-                        supporting = stringResource(R.string.settings_source_code_summary),
-                    )
-                }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingTitle(
+internal fun SettingTitle(
     title: String,
     supporting: String? = null,
     supportingFontFamily: FontFamily? = null,
@@ -368,17 +335,6 @@ private fun swatchColor(context: Context, option: ColorSchemeOption): Color {
     return option.seed?.let(::Color) ?: Color.Unspecified
 }
 
-private fun Context.versionName(): String {
-    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
-    } else {
-        @Suppress("DEPRECATION")
-        packageManager.getPackageInfo(packageName, 0)
-    }
-    return info.versionName.orEmpty()
-}
-
-private const val SOURCE_CODE_URL = "https://github.com/AbrarShakhi/smsman"
 private const val SELECTED_ROTATION = 90f
 private const val LIGHT_LUMINANCE = 0.5f
 private val SwatchSize = 52.dp

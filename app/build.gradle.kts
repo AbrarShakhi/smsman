@@ -1,3 +1,4 @@
+import javax.inject.Inject
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -73,4 +74,51 @@ kotlin {
 
 room {
     schemaDirectory("$projectDir/schemas")
+}
+
+val projectDocuments = rootProject.files(
+    "LICENSE",
+    "docs/ABOUT.md",
+    "docs/CREDITS.md",
+    "docs/PRIVACY.md",
+    "docs/TERMS.md",
+)
+
+androidComponents {
+    onVariants { variant ->
+        val variantName = variant.name.replaceFirstChar { it.uppercase() }
+        val generateDocuments = tasks.register<GenerateDocumentAssets>("generate${variantName}DocumentAssets") {
+            description = "Bundles the project documents into the ${variant.name} assets."
+            documents.from(projectDocuments)
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(
+            generateDocuments,
+            GenerateDocumentAssets::outputDirectory,
+        )
+    }
+}
+
+abstract class GenerateDocumentAssets : DefaultTask() {
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract val documents: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
+
+    @get:Inject
+    abstract val fileSystem: FileSystemOperations
+
+    @TaskAction
+    fun generate() {
+        val missing = documents.files.filterNot(File::isFile)
+        if (missing.isNotEmpty()) {
+            throw GradleException("Missing project documents: ${missing.joinToString()}")
+        }
+        fileSystem.sync {
+            from(documents)
+            into(outputDirectory.dir("documents"))
+        }
+    }
 }

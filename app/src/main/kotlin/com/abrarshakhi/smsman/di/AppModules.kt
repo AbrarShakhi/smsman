@@ -2,6 +2,7 @@ package com.abrarshakhi.smsman.di
 
 import androidx.room.Room
 import com.abrarshakhi.smsman.data.database.SmsmanDatabase
+import com.abrarshakhi.smsman.data.document.DocumentRepository
 import com.abrarshakhi.smsman.data.provider.ContactsDataSource
 import com.abrarshakhi.smsman.data.provider.ConversationsDataSource
 import com.abrarshakhi.smsman.data.provider.MessagesDataSource
@@ -14,12 +15,14 @@ import com.abrarshakhi.smsman.data.repository.PinnedRepository
 import com.abrarshakhi.smsman.data.repository.SearchRepository
 import com.abrarshakhi.smsman.data.repository.ThreadTitleResolver
 import com.abrarshakhi.smsman.data.settings.SettingsRepository
+import com.abrarshakhi.smsman.model.AppDocument
 import com.abrarshakhi.smsman.notification.MessageNotifier
 import com.abrarshakhi.smsman.sms.SmsRoleManager
 import com.abrarshakhi.smsman.sms.SmsSender
 import com.abrarshakhi.smsman.ui.MainAppViewModel
 import com.abrarshakhi.smsman.ui.chat.ChatViewModel
 import com.abrarshakhi.smsman.ui.conversations.ConversationsViewModel
+import com.abrarshakhi.smsman.ui.document.DocumentViewModel
 import com.abrarshakhi.smsman.ui.newmessage.NewMessageViewModel
 import com.abrarshakhi.smsman.ui.pinned.PinnedViewModel
 import com.abrarshakhi.smsman.ui.search.SearchViewModel
@@ -50,6 +53,7 @@ val dataModule = module {
     single { SearchRepository(get(), get()) }
     single { ThreadTitleResolver(get(), get()) }
     single { SettingsRepository(androidContext()) }
+    single { DocumentRepository(androidContext()) }
 }
 
 val platformModule = module {
@@ -76,6 +80,7 @@ val viewModelModule = module {
     viewModelOf(::NewMessageViewModel)
     viewModelOf(::SearchViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModel { (document: AppDocument) -> DocumentViewModel(get(), document) }
 }
 
 val appModules = listOf(dataModule, platformModule, viewModelModule)

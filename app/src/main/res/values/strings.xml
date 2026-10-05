@@ -111,10 +111,32 @@
     <string name="settings_font">Font</string>
     <string name="setting_font_description">Fonts other than the system default are downloaded on first use and fall back to the system font if unavailable.</string>
     <string name="settings_about">About</string>
-    <string name="settings_version">%1$s %2$s</string>
-    <string name="settings_version_summary">Your messages never leave this device</string>
+    <string name="settings_version">Version %1$s (%2$d)</string>
+    <string name="settings_app_summary">A free and open-source SMS app with no accounts, advertising or tracking.</string>
+    <string name="settings_about_app_summary">Features, requirements and limitations</string>
+    <string name="settings_open_source">Open source</string>
     <string name="settings_source_code">Source code</string>
-    <string name="settings_source_code_summary">Open source on GitHub</string>
+    <string name="settings_source_code_summary">Browse the project on GitHub</string>
+    <string name="settings_star">Star on GitHub</string>
+    <string name="settings_star_summary">Support the project by starring the repository</string>
+    <string name="settings_report_issue">Report an issue</string>
+    <string name="settings_report_issue_summary">Report a problem or suggest an improvement</string>
+    <string name="settings_share">Share %1$s</string>
+    <string name="settings_share_summary">Recommend the app to others</string>
+    <string name="settings_share_text">%1$s is a free and open-source SMS app for Android. %2$s</string>
+    <string name="settings_legal">Legal</string>
+    <string name="settings_terms_summary">The terms that govern your use of the app</string>
+    <string name="settings_privacy_summary">How the app handles your information</string>
+    <string name="settings_licence_summary" translatable="false">MIT License</string>
+    <string name="settings_credits_summary">Open-source libraries and acknowledgements</string>
+
+    <string name="document_about">About %1$s</string>
+    <string name="document_terms">Terms and conditions</string>
+    <string name="document_privacy">Privacy policy</string>
+    <string name="document_licence">Licence</string>
+    <string name="document_credits">Credits</string>
+    <string name="document_view_online">View on GitHub</string>
+    <string name="document_unavailable">This document is unavailable.</string>
 
     <string name="onboarding_title">Welcome to %1$s</string>
     <string name="onboarding_subtitle">Two quick steps and you are ready to chat.</string>

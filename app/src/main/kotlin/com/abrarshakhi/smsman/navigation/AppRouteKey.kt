@@ -1,6 +1,7 @@
 package com.abrarshakhi.smsman.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.abrarshakhi.smsman.model.AppDocument
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,4 +30,7 @@ sealed interface AppRouteKey : NavKey {
 
     @Serializable
     data object Settings : AppRouteKey
+
+    @Serializable
+    data class Document(val document: AppDocument) : AppRouteKey
 }
