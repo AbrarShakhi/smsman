@@ -3,56 +3,89 @@ package com.abrarshakhi.smsman.ui.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-
-private val AvatarColors = listOf(
-    Color(0xFF1A73E8), Color(0xFF12B5CB), Color(0xFF1E8E3E), Color(0xFFE37400),
-    Color(0xFFD93025), Color(0xFF9334E6), Color(0xFF3949AB), Color(0xFF00897B),
-)
+import androidx.graphics.shapes.RoundedPolygon
 
 @Composable
 fun ContactAvatar(
     displayName: String,
     colorIndex: Int,
     modifier: Modifier = Modifier,
-    size: Int = 48,
+    size: Dp = 48.dp,
 ) {
-    val color = AvatarColors[colorIndex.mod(AvatarColors.size)]
-    val initial = displayName.trim().firstOrNull { it.isLetter() }?.uppercase()
+    val colors = MaterialTheme.colorScheme.avatarColors(colorIndex)
+    val shape = avatarShape(colorIndex)
+    val initial = remember(displayName) { displayName.trim().firstOrNull { it.isLetter() }?.uppercase() }
 
     Box(
         modifier = modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(color),
+            .size(size)
+            .clip(shape)
+            .background(colors.container),
         contentAlignment = Alignment.Center,
     ) {
         if (initial != null) {
             Text(
                 text = initial,
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
+                color = colors.content,
+                style = if (size >= LargeAvatarSize) {
+                    MaterialTheme.typography.titleLargeEmphasized
+                } else {
+                    MaterialTheme.typography.titleMediumEmphasized
+                },
             )
         } else {
             Icon(
-                imageVector = Icons.Filled.Person,
+                imageVector = Icons.Rounded.Person,
                 contentDescription = null,
-                tint = Color.White,
-                modifier = Modifier.size((size * 0.6).dp),
+                tint = colors.content,
+                modifier = Modifier.size(size * ICON_FRACTION),
             )
         }
     }
 }
+
+private class AvatarColors(val container: Color, val content: Color)
+
+private fun ColorScheme.avatarColors(index: Int): AvatarColors = when (index.mod(AVATAR_PALETTE_SIZE)) {
+    0 -> AvatarColors(primaryContainer, onPrimaryContainer)
+    1 -> AvatarColors(tertiaryContainer, onTertiaryContainer)
+    else -> AvatarColors(secondaryContainer, onSecondaryContainer)
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun avatarShape(index: Int): Shape = AvatarPolygons[index.mod(AvatarPolygons.size)].toShape()
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private val AvatarPolygons: List<RoundedPolygon> = listOf(
+    MaterialShapes.Circle,
+    MaterialShapes.Cookie6Sided,
+    MaterialShapes.Clover4Leaf,
+    MaterialShapes.Cookie9Sided,
+    MaterialShapes.Sunny,
+    MaterialShapes.Cookie4Sided,
+    MaterialShapes.Puffy,
+    MaterialShapes.SoftBurst,
+)
+
+private const val AVATAR_PALETTE_SIZE = 3
+private const val ICON_FRACTION = 0.55f
+private val LargeAvatarSize = 48.dp

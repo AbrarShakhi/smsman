@@ -4,6 +4,7 @@ import android.telephony.SubscriptionManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.abrarshakhi.smsman.data.provider.MessagesDataSource
+import com.abrarshakhi.smsman.data.provider.PhoneNumbers
 import com.abrarshakhi.smsman.data.repository.MessageMetadataRepository
 import com.abrarshakhi.smsman.data.repository.MessageRepository
 import com.abrarshakhi.smsman.data.repository.ThreadTitleResolver
@@ -25,16 +26,24 @@ import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 sealed interface ChatItem {
-    data class DayDivider(val timestamp: Long) : ChatItem
+    val key: String
+
+    data class DayDivider(val timestamp: Long) : ChatItem {
+        override val key: String get() = "day-$timestamp"
+    }
+
     data class MessageRow(
         val message: Message,
+        val senderName: String?,
         val isFirstInGroup: Boolean,
         val isLastInGroup: Boolean,
-    ) : ChatItem
+    ) : ChatItem {
+        override val key: String get() = "message-${message.id}"
+    }
 }
 
 data class ChatState(
-    val title: ThreadTitle = ThreadTitle.Unknown,
+    val title: ThreadTitle? = null,
     val avatarColorIndex: Int = 0,
     val items: List<ChatItem> = emptyList(),
     val sims: List<SimInfo> = emptyList(),
@@ -120,7 +129,7 @@ class ChatViewModel(
                     val present = thread.messages.mapTo(mutableSetOf()) { it.id }
                     _state.value = previous.copy(
                         selectedIds = previous.selectedIds intersect present,
-                        items = buildItems(thread.messages),
+                        items = buildItems(thread.messages, thread.senderNames),
                         sims = thread.sims,
                         isLoading = false,
                         error = null,
@@ -131,7 +140,7 @@ class ChatViewModel(
         }
     }
 
-    private fun buildItems(messages: List<Message>): List<ChatItem> {
+    private fun buildItems(messages: List<Message>, senderNames: Map<String, String>): List<ChatItem> {
         if (messages.isEmpty()) return emptyList()
 
         val rows = messages.mapIndexed { index, message ->
@@ -139,6 +148,7 @@ class ChatViewModel(
             val next = messages.getOrNull(index + 1)
             ChatItem.MessageRow(
                 message = message,
+                senderName = if (message.isOutgoing) null else message.address?.let(senderNames::get),
                 isFirstInGroup = previous == null || !groups(previous, message),
                 isLastInGroup = next == null || !groups(message, next),
             )
@@ -263,9 +273,17 @@ class ChatViewModel(
     }
 
     private fun groups(earlier: Message, later: Message): Boolean =
-        earlier.isOutgoing == later.isOutgoing &&
+        sameSender(earlier, later) &&
             sameDay(earlier.date, later.date) &&
             later.date - earlier.date < GROUPING_WINDOW_MS
+
+    private fun sameSender(a: Message, b: Message): Boolean {
+        if (a.isOutgoing != b.isOutgoing) return false
+        if (a.isOutgoing) return true
+        val first = a.address.orEmpty()
+        val second = b.address.orEmpty()
+        return PhoneNumbers.sameNumber(first, second)
+    }
 
     private fun sameDay(a: Long, b: Long): Boolean {
         val first = Calendar.getInstance().apply { timeInMillis = a }

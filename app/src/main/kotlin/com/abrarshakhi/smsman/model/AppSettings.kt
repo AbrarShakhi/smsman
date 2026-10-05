@@ -1,6 +1,7 @@
 package com.abrarshakhi.smsman.model
 
 import android.os.Build
+import androidx.annotation.ChecksSdkIntAtLeast
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
@@ -17,6 +18,7 @@ enum class ColorSchemeOption(val label: String, val seed: Long?) {
     BROWN("Brown", 0xFF795548), SLATE("Slate", 0xFF546E7A),
 }
 
+@ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
 fun isDynamicColorSchemeSupported(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 fun defaultColorSchemeOption(): ColorSchemeOption =

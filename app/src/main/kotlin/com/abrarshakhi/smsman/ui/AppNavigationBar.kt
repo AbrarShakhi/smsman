@@ -1,7 +1,7 @@
 package com.abrarshakhi.smsman.ui
 
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,11 +16,11 @@ fun AppNavigationBar(
     onSelect: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    NavigationBar(modifier = modifier) {
+    ShortNavigationBar(modifier = modifier) {
         TopLevelDestination.entries.forEach { destination ->
             val selected = destination.route == selectedRoute
             val label = stringResource(destination.label)
-            NavigationBarItem(
+            ShortNavigationBarItem(
                 selected = selected,
                 onClick = { onSelect(destination) },
                 icon = {

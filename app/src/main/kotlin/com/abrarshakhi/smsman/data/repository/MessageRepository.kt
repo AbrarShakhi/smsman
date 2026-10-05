@@ -1,5 +1,6 @@
 package com.abrarshakhi.smsman.data.repository
 
+import com.abrarshakhi.smsman.data.provider.ContactsDataSource
 import com.abrarshakhi.smsman.data.provider.MessagesDataSource
 import com.abrarshakhi.smsman.data.provider.SimDataSource
 import com.abrarshakhi.smsman.data.provider.TelephonyChangeObserver
@@ -14,23 +15,32 @@ import kotlinx.coroutines.flow.map
 class MessageRepository(
     private val messages: MessagesDataSource,
     private val sims: SimDataSource,
+    private val contacts: ContactsDataSource,
     private val metadata: MessageMetadataRepository,
     private val changes: TelephonyChangeObserver,
 ) {
 
     fun observeThread(threadId: Long): Flow<ThreadMessages> =
         combine(
-            changes.changes().map { messages.loadMessages(threadId) to sims.activeSims() },
+            changes.changes().map { loadThread(threadId) },
             metadata.observePinnedIdsInThread(threadId),
-        ) { (loaded, activeSims), pinnedIds ->
-            ThreadMessages(
-                messages = loaded.map { it.copy(isPinned = it.id in pinnedIds) },
-                sims = activeSims,
-            )
+        ) { thread, pinnedIds ->
+            thread.copy(messages = thread.messages.map { it.copy(isPinned = it.id in pinnedIds) })
         }.flowOn(Dispatchers.IO)
 
-    suspend fun prunePinsAgainst(loaded: List<Message>, pinnedIds: Set<Long>) {
-        val present = loaded.mapTo(mutableSetOf()) { it.id }
-        metadata.prunePins(pinnedIds.filterNot { it in present })
+    private fun loadThread(threadId: Long): ThreadMessages {
+        val loaded = messages.loadMessages(threadId)
+        return ThreadMessages(
+            messages = loaded,
+            sims = sims.activeSims(),
+            senderNames = senderNames(loaded),
+        )
     }
+
+    private fun senderNames(loaded: List<Message>): Map<String, String> =
+        loaded.asSequence()
+            .filterNot(Message::isOutgoing)
+            .mapNotNull { message -> message.address?.takeIf(String::isNotBlank) }
+            .distinct()
+            .associateWith { address -> contacts.lookup(address)?.displayName ?: address }
 }

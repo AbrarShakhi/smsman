@@ -5,21 +5,125 @@
     <string name="tab_favorite">Favorite</string>
     <string name="tab_pinned">Pinned</string>
 
+    <string name="action_back">Back</string>
+    <string name="action_search">Search</string>
+    <string name="action_more_options">More options</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
     <string name="action_start_chat">Start chat</string>
 
-    <string name="onboarding_title">Set up %1$s</string>
-    <string name="onboarding_default_sms_done">%1$s is your default SMS app</string>
+    <plurals name="home_unread_count">
+        <item quantity="one">%d unread conversation</item>
+        <item quantity="other">%d unread conversations</item>
+    </plurals>
+    <string name="home_all_caught_up">All caught up</string>
+    <plurals name="favorites_count">
+        <item quantity="one">%d favourite</item>
+        <item quantity="other">%d favourites</item>
+    </plurals>
+    <plurals name="pinned_count">
+        <item quantity="one">%d pinned message</item>
+        <item quantity="other">%d pinned messages</item>
+    </plurals>
+    <plurals name="conversation_unread_badge">
+        <item quantity="one">%d unread message</item>
+        <item quantity="other">%d unread messages</item>
+    </plurals>
+    <string name="conversation_favorite">Favourite</string>
+    <string name="conversation_no_preview">No preview</string>
+
+    <string name="empty_inbox_title">No conversations yet</string>
+    <string name="empty_inbox_message">Messages you send and receive will show up here.</string>
+    <string name="empty_favorites_title">No favourites yet</string>
+    <string name="empty_favorites_message">Tap the heart in a conversation to keep it close.</string>
+    <string name="empty_pinned_title">Nothing pinned yet</string>
+    <string name="empty_pinned_message">Long-press a message in a chat and pin it to find it here.</string>
+
+    <string name="search_placeholder">Search messages</string>
+    <string name="search_clear">Clear search</string>
+    <string name="search_idle_title">Find anything</string>
+    <string name="search_idle_message">Search across every conversation, contact and message.</string>
+    <string name="search_no_results_title">No results</string>
+    <string name="search_no_results_message">Nothing matches “%1$s”.</string>
+    <string name="search_people">People</string>
+    <string name="search_messages">Messages</string>
+
+    <string name="chat_empty_title">No messages here</string>
+    <string name="chat_empty_message">Say hello. Messages in this conversation will show up here.</string>
+    <string name="chat_day_today">Today</string>
+    <string name="chat_day_yesterday">Yesterday</string>
+    <string name="chat_sender_me">Me</string>
+    <string name="chat_sender_unknown">Unknown</string>
+    <string name="chat_status_sending">Sending</string>
+    <string name="chat_status_sent">Sent</string>
+    <string name="chat_status_delivered">Delivered</string>
+    <string name="chat_status_not_delivered">Not delivered</string>
+    <string name="chat_status_failed">Not sent</string>
+    <string name="chat_status_draft">Draft</string>
+    <string name="chat_sim">SIM %1$d</string>
+    <string name="chat_sim_detail">SIM %1$d · %2$s</string>
+    <string name="chat_sim_unknown">Unknown SIM</string>
+    <string name="chat_pinned">Pinned</string>
+    <plurals name="chat_selected_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
+    <string name="chat_clear_selection">Clear selection</string>
+    <string name="chat_pin">Pin</string>
+    <string name="chat_unpin">Unpin</string>
+    <plurals name="chat_delete_messages_title">
+        <item quantity="one">Delete message?</item>
+        <item quantity="other">Delete %d messages?</item>
+    </plurals>
+    <string name="chat_delete_messages_body">This permanently removes them from this device.</string>
+    <string name="chat_add_favorite">Add to favourites</string>
+    <string name="chat_remove_favorite">Remove from favourites</string>
+    <string name="chat_mark_unread">Mark as unread</string>
+    <string name="chat_delete_conversation">Delete conversation</string>
+    <string name="chat_delete_conversation_title">Delete conversation?</string>
+    <string name="chat_delete_conversation_body">Every message in this conversation is permanently removed from this device.</string>
+
+    <string name="composer_placeholder">Text message</string>
+    <string name="composer_send">Send</string>
+    <string name="composer_sim">SIM</string>
+    <plurals name="composer_segments">
+        <item quantity="one">%1$d message · %2$d left</item>
+        <item quantity="other">%1$d messages · %2$d left</item>
+    </plurals>
+    <string name="composer_unicode">Unicode</string>
+
+    <string name="new_message_title">New message</string>
+    <string name="new_message_to">To</string>
+    <string name="new_message_recipient_placeholder">Name or phone number</string>
+    <string name="new_message_hint_empty">Enter a name or number to start</string>
+    <string name="new_message_hint_no_match">No matching contacts. The number will be used as typed.</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_color">Colour</string>
+    <string name="settings_color_dynamic">Matches your wallpaper</string>
+    <string name="settings_color_accent">%1$s accent</string>
+    <string name="settings_font">Font</string>
     <string name="setting_font_description">Fonts other than the system default are downloaded on first use and fall back to the system font if unavailable.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">%1$s %2$s</string>
+    <string name="settings_version_summary">Your messages never leave this device</string>
+    <string name="settings_source_code">Source code</string>
+    <string name="settings_source_code_summary">Open source on GitHub</string>
 
-    <string name="onboarding_step_permissions_title">1. Permissions</string>
+    <string name="onboarding_title">Welcome to %1$s</string>
+    <string name="onboarding_subtitle">Two quick steps and you are ready to chat.</string>
+    <string name="onboarding_step_permissions_title">Permissions</string>
     <string name="onboarding_step_permissions_detail">Needed to read messages, contacts and SIM details.</string>
-    <string name="onboarding_step_permissions_granted">Granted</string>
-    <string name="onboarding_step_permissions_action">Grant permissions</string>
-
-    <string name="onboarding_step_sms_title">2. Default SMS app</string>
+    <string name="onboarding_step_permissions_action">Allow</string>
+    <string name="onboarding_step_sms_title">Default SMS app</string>
     <string name="onboarding_step_sms_detail">Android only lets the default SMS app receive and store messages.</string>
-    <string name="onboarding_step_sms_action">Set as default</string>
+    <string name="onboarding_step_sms_action">Set default</string>
+    <string name="onboarding_step_done">Done</string>
     <string name="onboarding_continue">Continue</string>
-    <string name="no_fac_conv_yet">"No favourite conversations yet."</string>
-    <string name="no_conv_yet">""No conversations yet.""</string>
 </resources>

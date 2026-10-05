@@ -11,7 +11,7 @@ import com.abrarshakhi.smsman.ui.search.SearchRoute
 import com.abrarshakhi.smsman.ui.settings.SettingsRoute
 
 fun appEntryProvider(navigator: Navigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
-    entry<AppRouteKey.AllMessages> {
+    entry<AppRouteKey.AllMessages>(metadata = topLevelMetadata()) {
         ConversationsRoute(
             favoritesOnly = false,
             onOpenConversation = { threadId -> navigator.navigate(AppRouteKey.Chat(threadId)) },
@@ -21,7 +21,7 @@ fun appEntryProvider(navigator: Navigator): (NavKey) -> NavEntry<NavKey> = entry
         )
     }
 
-    entry<AppRouteKey.Favorite> {
+    entry<AppRouteKey.Favorite>(metadata = topLevelMetadata()) {
         ConversationsRoute(
             favoritesOnly = true,
             onOpenConversation = { threadId -> navigator.navigate(AppRouteKey.Chat(threadId)) },
@@ -30,7 +30,7 @@ fun appEntryProvider(navigator: Navigator): (NavKey) -> NavEntry<NavKey> = entry
         )
     }
 
-    entry<AppRouteKey.Pinned> {
+    entry<AppRouteKey.Pinned>(metadata = topLevelMetadata()) {
         PinnedRoute(
             onOpenMessage = { threadId, messageId ->
                 navigator.navigate(AppRouteKey.Chat(threadId, highlightMessageId = messageId))

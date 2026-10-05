@@ -2,12 +2,12 @@ package com.abrarshakhi.smsman.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.automirrored.outlined.Message
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.automirrored.rounded.Message
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.PushPin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.abrarshakhi.smsman.R
@@ -21,19 +21,19 @@ enum class TopLevelDestination(
     AllMessages(
         route = AppRouteKey.AllMessages,
         label = R.string.tab_all_messages,
-        selectedIcon = Icons.AutoMirrored.Filled.Message,
+        selectedIcon = Icons.AutoMirrored.Rounded.Message,
         unselectedIcon = Icons.AutoMirrored.Outlined.Message,
     ),
     Favorite(
         route = AppRouteKey.Favorite,
         label = R.string.tab_favorite,
-        selectedIcon = Icons.Filled.Favorite,
-        unselectedIcon = Icons.Outlined.FavoriteBorder,
+        selectedIcon = Icons.Rounded.Favorite,
+        unselectedIcon = Icons.Rounded.FavoriteBorder,
     ),
     Pinned(
         route = AppRouteKey.Pinned,
         label = R.string.tab_pinned,
-        selectedIcon = Icons.Filled.PushPin,
+        selectedIcon = Icons.Rounded.PushPin,
         unselectedIcon = Icons.Outlined.PushPin,
     ),
 }

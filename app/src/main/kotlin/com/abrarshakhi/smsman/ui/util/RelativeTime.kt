@@ -2,6 +2,7 @@ package com.abrarshakhi.smsman.ui.util
 
 import android.content.Context
 import android.text.format.DateUtils
+import com.abrarshakhi.smsman.R
 import java.util.Calendar
 
 fun formatConversationTime(
@@ -28,6 +29,21 @@ fun formatConversationTime(
     return DateUtils.formatDateTime(context, timestamp, flags)
 }
 
+fun formatMessageTime(context: Context, timestamp: Long): String =
+    if (timestamp <= 0L) "" else DateUtils.formatDateTime(context, timestamp, DateUtils.FORMAT_SHOW_TIME)
+
+fun formatMessageTimestamp(context: Context, timestamp: Long): String =
+    if (timestamp <= 0L) {
+        ""
+    } else {
+        DateUtils.formatDateTime(
+            context,
+            timestamp,
+            DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_SHOW_YEAR or
+                DateUtils.FORMAT_ABBREV_MONTH,
+        )
+    }
+
 fun formatDayDivider(
     context: Context,
     timestamp: Long,
@@ -47,8 +63,8 @@ fun formatDayDivider(
             a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
 
     return when {
-        sameDay(then, today) -> "Today"
-        sameDay(then, yesterday) -> "Yesterday"
+        sameDay(then, today) -> context.getString(R.string.chat_day_today)
+        sameDay(then, yesterday) -> context.getString(R.string.chat_day_yesterday)
         now - timestamp < 7 * DateUtils.DAY_IN_MILLIS -> DateUtils.formatDateTime(
             context, timestamp, DateUtils.FORMAT_SHOW_WEEKDAY,
         )

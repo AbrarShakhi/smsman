@@ -45,7 +45,7 @@ val dataModule = module {
 
     single { MessageMetadataRepository(get(), get()) }
     single { ConversationRepository(get(), get(), get(), get()) }
-    single { MessageRepository(get(), get(), get(), get()) }
+    single { MessageRepository(get(), get(), get(), get(), get()) }
     single { PinnedRepository(get(), get(), get(), get()) }
     single { SearchRepository(get(), get()) }
     single { ThreadTitleResolver(get(), get()) }

@@ -1,77 +1,104 @@
 package com.abrarshakhi.smsman.ui.chat
 
+import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Done
+import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.PushPin
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.flowWithLifecycle
+import com.abrarshakhi.smsman.R
 import com.abrarshakhi.smsman.model.DeliveryStatus
 import com.abrarshakhi.smsman.model.Message
 import com.abrarshakhi.smsman.model.MessageType
 import com.abrarshakhi.smsman.model.SimInfo
-import com.abrarshakhi.smsman.sms.SegmentInfo
+import com.abrarshakhi.smsman.ui.component.EmptyState
+import com.abrarshakhi.smsman.ui.component.ErrorContent
+import com.abrarshakhi.smsman.ui.component.Illustration
+import com.abrarshakhi.smsman.ui.component.ListPhase
+import com.abrarshakhi.smsman.ui.component.LoadingContent
+import com.abrarshakhi.smsman.ui.component.MessageComposer
+import com.abrarshakhi.smsman.ui.component.SwipeToGoBack
+import com.abrarshakhi.smsman.ui.component.listPhaseOf
 import com.abrarshakhi.smsman.ui.util.formatDayDivider
+import com.abrarshakhi.smsman.ui.util.formatMessageTime
+import com.abrarshakhi.smsman.ui.util.formatMessageTimestamp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import java.text.DateFormat
-import java.util.Date
 
 @Composable
 fun ChatRoute(
@@ -97,417 +124,441 @@ fun ChatScreen(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentOnBack by rememberUpdatedState(onBack)
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val motion = MaterialTheme.motionScheme
 
     LaunchedEffect(viewModel, lifecycle) {
         viewModel.state.flowWithLifecycle(lifecycle).first { it.isClosed }
         currentOnBack()
     }
 
-    Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            ChatTopBar(
-                title = state.title,
-                avatarColorIndex = state.avatarColorIndex,
-                isFavorite = state.isFavorite,
-                onBack = onBack,
-                onToggleFavorite = viewModel::onToggleFavorite,
-                onMarkUnread = viewModel::onMarkUnread,
-                onDeleteConversation = viewModel::onDeleteConversation,
-                scrollBehavior = scrollBehavior,
-            )
-        },
-        contentWindowInsets = WindowInsets.safeDrawing,
-    ) { padding ->
-        val contentModifier = Modifier.padding(padding)
+    BackHandler(enabled = state.inSelectionMode, onBack = viewModel::onClearSelection)
 
-        when {
-            state.isLoading -> Box(contentModifier.fillMaxSize(), Alignment.TopStart) {
-                LinearWavyProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-
-            state.error != null -> Box(contentModifier.fillMaxSize(), Alignment.Center) {
-                Text(state.error ?: "", color = MaterialTheme.colorScheme.error)
-            }
-
-            else -> Column(contentModifier.fillMaxSize()) {
-                if (state.inSelectionMode) {
-                    SelectionBar(
-                        count = state.selectedIds.size,
-                        pinAction = state.selectionPinAction,
-                        onPin = viewModel::onPinSelected,
-                        onDelete = viewModel::onDeleteSelected,
-                        onClose = viewModel::onClearSelection,
-                    )
-                }
-                var expandedId by rememberSaveable { mutableLongStateOf(-1L) }
-                val listState = rememberLazyListState()
-
-                LaunchedEffect(highlightMessageId, state.items) {
-                    if (highlightMessageId == null) return@LaunchedEffect
-                    val index = state.items.indexOfFirst {
-                        it is ChatItem.MessageRow && it.message.id == highlightMessageId
-                    }
-                    if (index >= 0) {
-                        listState.scrollToItem(index)
-                        expandedId = highlightMessageId
+    SwipeToGoBack(modifier = modifier.fillMaxSize(), enabled = !state.inSelectionMode) {
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                AnimatedContent(
+                    targetState = state.selectedIds.size.takeIf { it > 0 },
+                    contentKey = { count -> count != null },
+                    transitionSpec = {
+                        fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec())
+                    },
+                ) { selectedCount ->
+                    if (selectedCount == null) {
+                        ConversationTopBar(
+                            title = state.title,
+                            avatarColorIndex = state.avatarColorIndex,
+                            isFavorite = state.isFavorite,
+                            onBack = onBack,
+                            onToggleFavorite = viewModel::onToggleFavorite,
+                            onMarkUnread = viewModel::onMarkUnread,
+                            onDeleteConversation = viewModel::onDeleteConversation,
+                            scrollBehavior = scrollBehavior,
+                        )
+                    } else {
+                        SelectionTopBar(
+                            count = selectedCount,
+                            pinAction = state.selectionPinAction,
+                            onClearSelection = viewModel::onClearSelection,
+                            onTogglePin = viewModel::onPinSelected,
+                            onDelete = viewModel::onDeleteSelected,
+                        )
                     }
                 }
+            },
+            contentWindowInsets = WindowInsets.safeDrawing,
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                AnimatedContent(
+                    targetState = listPhaseOf(state.isLoading, state.error, state.items.isEmpty()),
+                    transitionSpec = {
+                        fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec())
+                    },
+                    modifier = Modifier.weight(1f),
+                ) { phase ->
+                    when (phase) {
+                        ListPhase.Loading -> LoadingContent()
+                        ListPhase.Error -> ErrorContent(message = state.error.orEmpty())
+                        ListPhase.Empty -> EmptyState(
+                            illustration = Illustration.EmptyInbox,
+                            title = stringResource(R.string.chat_empty_title),
+                            message = stringResource(R.string.chat_empty_message),
+                        )
 
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    reverseLayout = true,
-                    contentPadding = PaddingValues(vertical = 8.dp),
-                ) {
-                    items(
-                        items = state.items,
-                        expandedId = expandedId,
-                        isMultiSim = state.isMultiSim,
-                        sims = state.sims,
-                        selectedIds = state.selectedIds,
-                        inSelectionMode = state.inSelectionMode,
-                        onToggle = { id -> expandedId = if (expandedId == id) -1L else id },
-                        onToggleSelection = viewModel::onToggleSelection,
-                    )
+                        ListPhase.Content -> MessageList(
+                            items = state.items,
+                            sims = state.sims,
+                            selectedIds = state.selectedIds,
+                            highlightMessageId = highlightMessageId,
+                            onToggleSelection = viewModel::onToggleSelection,
+                        )
+                    }
                 }
-
-                state.sendError?.let { error ->
-                    Text(
-                        text = error,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-                ComposeBar(
+                MessageComposer(
                     draft = state.draft,
+                    onDraftChange = viewModel::onDraftChange,
                     canSend = state.canSend,
+                    onSend = viewModel::onSend,
                     segments = state.segments,
                     sims = state.sims,
                     selectedSim = state.selectedSim,
-                    isMultiSim = state.isMultiSim,
-                    onDraftChange = viewModel::onDraftChange,
                     onSimSelected = viewModel::onSimSelected,
-                    onSend = viewModel::onSend,
+                    error = state.sendError,
                 )
             }
         }
     }
 }
 
-private fun androidx.compose.foundation.lazy.LazyListScope.items(
+@Composable
+private fun MessageList(
     items: List<ChatItem>,
-    expandedId: Long,
-    isMultiSim: Boolean,
     sims: List<SimInfo>,
     selectedIds: Set<Long>,
-    inSelectionMode: Boolean,
-    onToggle: (Long) -> Unit,
+    highlightMessageId: Long?,
     onToggleSelection: (Message) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    items.forEach { item ->
-        when (item) {
-            is ChatItem.DayDivider -> item(key = "divider-${item.timestamp}") {
-                DayDivider(item.timestamp)
-            }
+    val listState = rememberLazyListState()
+    val motion = MaterialTheme.motionScheme
+    val currentItems by rememberUpdatedState(items)
+    val simsById = remember(sims) { sims.associateBy(SimInfo::subscriptionId) }
+    val showSim = sims.size > 1
+    val inSelectionMode = selectedIds.isNotEmpty()
 
-            is ChatItem.MessageRow -> item(key = "message-${item.message.id}") {
-                MessageBubble(
-                    row = item,
-                    isExpanded = expandedId == item.message.id,
-                    isMultiSim = isMultiSim,
-                    sims = sims,
-                    isSelected = item.message.id in selectedIds,
-                    onClick = {
-                        if (inSelectionMode) onToggleSelection(item.message)
-                        else onToggle(item.message.id)
-                    },
-                    onLongClick = { onToggleSelection(item.message) },
-                )
-            }
-        }
+    var expandedId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var highlightHandled by rememberSaveable { mutableStateOf(false) }
+    var flashingId by remember { mutableStateOf<Long?>(null) }
+
+    LaunchedEffect(highlightMessageId, items) {
+        if (highlightMessageId == null || highlightHandled) return@LaunchedEffect
+        val index = items.indexOfFirst { it is ChatItem.MessageRow && it.message.id == highlightMessageId }
+        if (index < 0) return@LaunchedEffect
+        highlightHandled = true
+        expandedId = highlightMessageId
+        flashingId = highlightMessageId
+        listState.scrollToItem(index)
     }
-}
 
-@Composable
-private fun DayDivider(timestamp: Long) {
-    val context = LocalContext.current
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 16.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    LaunchedEffect(flashingId) {
+        if (flashingId == null) return@LaunchedEffect
+        delay(HIGHLIGHT_MILLIS)
+        flashingId = null
+    }
+
+    LaunchedEffect(listState) {
+        snapshotFlow { (currentItems.firstOrNull() as? ChatItem.MessageRow)?.message }
+            .filterNotNull()
+            .distinctUntilChangedBy(Message::id)
+            .drop(1)
+            .collect { newest ->
+                if (newest.isOutgoing || listState.firstVisibleItemIndex <= 1) {
+                    listState.animateScrollToItem(0)
+                }
+            }
+    }
+
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        reverseLayout = true,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        HorizontalDivider(Modifier.weight(1f))
-        Text(
-            text = formatDayDivider(context, timestamp),
-            modifier = Modifier.padding(horizontal = 12.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        HorizontalDivider(Modifier.weight(1f))
-    }
-}
-
-@Composable
-@OptIn(ExperimentalFoundationApi::class)
-private fun MessageBubble(
-    row: ChatItem.MessageRow,
-    isExpanded: Boolean,
-    isMultiSim: Boolean,
-    sims: List<SimInfo>,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    val message = row.message
-    val outgoing = message.isOutgoing
-    val corner = 18.dp
-    val tail = 4.dp
-
-    val shape = if (outgoing) {
-        RoundedCornerShape(corner, corner, if (row.isLastInGroup) tail else corner, corner)
-    } else {
-        RoundedCornerShape(corner, corner, corner, if (row.isLastInGroup) tail else corner)
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-                else Color.Transparent,
+        items(items = items, key = ChatItem::key, contentType = { item -> item::class }) { item ->
+            val itemModifier = Modifier.animateItem(
+                fadeInSpec = motion.defaultEffectsSpec(),
+                placementSpec = motion.defaultSpatialSpec(),
+                fadeOutSpec = motion.fastEffectsSpec(),
             )
-            .padding(
-                start = 16.dp,
-                end = 16.dp,
-                top = if (row.isFirstInGroup) 8.dp else 2.dp,
-                bottom = 2.dp,
-            ),
-        horizontalAlignment = if (outgoing) Alignment.End else Alignment.Start,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (message.isPinned) {
-                Icon(
-                    imageVector = Icons.Filled.PushPin,
-                    contentDescription = "Pinned",
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.width(4.dp))
-            }
-            Surface(
-                shape = shape,
-                color = if (outgoing) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHigh
-                },
-                modifier = Modifier
-                    .widthIn(max = 280.dp)
-                    .combinedClickable(onClick = onClick, onLongClick = onLongClick),
-            ) {
-                Text(
-                    text = message.body,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (outgoing) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                )
+            when (item) {
+                is ChatItem.DayDivider -> DayDivider(timestamp = item.timestamp, modifier = itemModifier)
+                is ChatItem.MessageRow -> {
+                    val message = item.message
+                    MessageRow(
+                        row = item,
+                        sim = simsById[message.subscriptionId],
+                        showSim = showSim,
+                        isSelected = message.id in selectedIds,
+                        isExpanded = message.id == expandedId,
+                        isHighlighted = message.id == flashingId,
+                        onClick = {
+                            if (inSelectionMode) {
+                                onToggleSelection(message)
+                            } else {
+                                expandedId = if (expandedId == message.id) null else message.id
+                            }
+                        },
+                        onLongClick = { onToggleSelection(message) },
+                        modifier = itemModifier,
+                    )
+                }
             }
         }
+    }
+}
 
-        if (isMultiSim && row.isLastInGroup) {
-            val sim = sims.firstOrNull { it.subscriptionId == message.subscriptionId }
+@Composable
+private fun DayDivider(timestamp: Long, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 20.dp, bottom = 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
             Text(
-                text = sim?.let { "SIM ${it.slotIndex + 1} · ${it.label}" } ?: "Unknown SIM",
-                modifier = Modifier.padding(top = 2.dp, start = 4.dp, end = 4.dp),
-                style = MaterialTheme.typography.labelSmall,
+                text = formatDayDivider(context, timestamp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelMediumEmphasized,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-
-        AnimatedVisibility(visible = isExpanded) {
-            MessageDetails(message = message, isMultiSim = isMultiSim, sims = sims)
-        }
     }
 }
 
 @Composable
-private fun MessageDetails(message: Message, isMultiSim: Boolean, sims: List<SimInfo>) {
-    val sim = remember(message.subscriptionId, sims) {
-        sims.firstOrNull { it.subscriptionId == message.subscriptionId }
-    }
-    val parts = buildList {
-        add(
-            DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-                .format(Date(message.date))
-        )
-        if (isMultiSim) {
-            add(sim?.let { "SIM ${it.slotIndex + 1} · ${it.label}" } ?: "Unknown SIM")
-        }
-        statusLabel(message)?.let(::add)
-    }
-
-    Text(
-        text = parts.joinToString(" · "),
-        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = if (message.isOutgoing) TextAlign.End else TextAlign.Start,
+private fun MessageRow(
+    row: ChatItem.MessageRow,
+    sim: SimInfo?,
+    showSim: Boolean,
+    isSelected: Boolean,
+    isExpanded: Boolean,
+    isHighlighted: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val message = row.message
+    val colors = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    val accent = if (message.isOutgoing) colors.primary else colors.tertiary
+    val status = outgoingStatusOf(message)
+    val entrance by rememberEntranceProgress(message)
+    val selection by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
+        animationSpec = motion.defaultEffectsSpec(),
     )
-}
+    val highlight by animateFloatAsState(
+        targetValue = if (isHighlighted) 1f else 0f,
+        animationSpec = tween(if (isHighlighted) HIGHLIGHT_IN_MILLIS else HIGHLIGHT_OUT_MILLIS),
+    )
+    val selectedColor = colors.secondaryContainer
+    val highlightColor = colors.tertiaryContainer
+    val enter = expandVertically(motion.fastSpatialSpec()) + fadeIn(motion.fastEffectsSpec())
+    val exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec())
 
-private fun statusLabel(message: Message): String? = when {
-    !message.isOutgoing -> null
-    message.type == MessageType.FAILED -> "Failed"
-    message.type == MessageType.QUEUED || message.type == MessageType.OUTBOX -> "Sending"
-    message.type == MessageType.DRAFT -> "Draft"
-    message.status == DeliveryStatus.COMPLETE -> "Delivered"
-    message.status == DeliveryStatus.PENDING -> "Sent"
-    message.status == DeliveryStatus.FAILED -> "Not delivered"
-    else -> "Sent"
-}
-
-@Composable
-private fun ComposeBar(
-    draft: String,
-    canSend: Boolean,
-    segments: SegmentInfo,
-    sims: List<SimInfo>,
-    selectedSim: SimInfo?,
-    isMultiSim: Boolean,
-    onDraftChange: (String) -> Unit,
-    onSimSelected: (Int) -> Unit,
-    onSend: () -> Unit,
-) {
-    var simMenuOpen by remember { mutableStateOf(false) }
-
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            if (segments.segments > 1) {
-                Text(
-                    text = "${segments.segments} messages · ${segments.remainingInSegment} left" + if (segments.isUnicode) " · Unicode" else "",
-                    modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (isMultiSim) {
-                    Box {
-                        AssistChip(
-                            onClick = { simMenuOpen = true },
-                            label = {
-                                Text(selectedSim?.let { "SIM ${it.slotIndex + 1}" } ?: "SIM")
-                            },
-                            modifier = Modifier.padding(bottom = 4.dp),
-                        )
-                        DropdownMenu(
-                            expanded = simMenuOpen,
-                            onDismissRequest = { simMenuOpen = false },
-                        ) {
-                            sims.forEach { sim ->
-                                DropdownMenuItem(
-                                    text = { Text("SIM ${sim.slotIndex + 1} · ${sim.label}") },
-                                    onClick = {
-                                        onSimSelected(sim.subscriptionId)
-                                        simMenuOpen = false
-                                    },
-                                )
-                            }
-                        }
-                    }
-                }
-
-                OutlinedTextField(
-                    value = draft,
-                    onValueChange = onDraftChange,
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Text message") },
-                    shape = RoundedCornerShape(24.dp),
-                    maxLines = 5,
-                )
-
-                FilledIconButton(
-                    onClick = onSend,
-                    enabled = canSend,
-                    modifier = Modifier.padding(bottom = 4.dp),
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send")
-                }
-            }
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (row.isFirstInGroup) {
+            SenderHeader(
+                name = senderLabel(row),
+                color = accent,
+                time = formatMessageTime(LocalContext.current, message.date),
+                simLabel = if (showSim) simShortLabel(sim) else null,
+            )
         }
-    }
-}
-
-@Composable
-private fun SelectionBar(
-    count: Int,
-    pinAction: Boolean,
-    onPin: () -> Unit,
-    onDelete: () -> Unit,
-    onClose: () -> Unit,
-) {
-    var confirmDelete by remember { mutableStateOf(false) }
-
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()
-    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+                .clip(MaterialTheme.shapes.large)
+                .drawBehind {
+                    if (highlight > 0f) drawRect(highlightColor.copy(alpha = highlight))
+                    if (selection > 0f) drawRect(selectedColor.copy(alpha = selection))
+                }
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                .height(IntrinsicSize.Min)
+                .padding(horizontal = 8.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onClose) {
-                Icon(Icons.Filled.Close, contentDescription = "Clear selection")
-            }
-            Text(
-                text = "$count selected",
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
+            Box(
+                modifier = Modifier
+                    .width(AccentWidth)
+                    .fillMaxHeight()
+                    .graphicsLayer {
+                        scaleY = entrance
+                        transformOrigin = TransformOrigin(0.5f, 1f)
+                    }
+                    .background(accent, CircleShape),
             )
-            IconButton(onClick = onPin) {
+            Text(
+                text = message.body,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 12.dp)
+                    .graphicsLayer {
+                        translationX = (1f - entrance) * -EntranceShift.toPx()
+                        translationY = (1f - entrance) * EntranceShift.toPx()
+                    },
+                style = MaterialTheme.typography.bodyLarge,
+                color = colors.onSurface,
+            )
+            if (message.isPinned) {
                 Icon(
-                    imageVector = Icons.Filled.PushPin,
-                    contentDescription = if (pinAction) "Pin" else "Unpin",
+                    imageVector = Icons.Rounded.PushPin,
+                    contentDescription = stringResource(R.string.chat_pinned),
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(16.dp),
+                    tint = colors.tertiary,
                 )
             }
-            IconButton(onClick = { confirmDelete = true }) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+            AnimatedVisibility(
+                visible = isSelected,
+                enter = scaleIn(motion.fastSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
+                exit = scaleOut(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.CheckCircle,
+                    contentDescription = null,
+                    modifier = Modifier.padding(start = 8.dp),
+                    tint = colors.primary,
+                )
             }
         }
+        AnimatedVisibility(
+            visible = status != null && (row.isLastInGroup || status.isError),
+            enter = enter,
+            exit = exit,
+        ) {
+            if (status != null) DeliveryFooter(status = status)
+        }
+        AnimatedVisibility(visible = isExpanded, enter = enter, exit = exit) {
+            MessageDetails(message = message, sim = sim, showSim = showSim)
+        }
     }
+}
 
-    if (confirmDelete) {
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            title = { Text(if (count == 1) "Delete message?" else "Delete $count messages?") },
-            text = { Text("This permanently removes them from this device.") },
-            confirmButton = {
-                TextButton(onClick = { confirmDelete = false; onDelete() }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text("Cancel") }
-            },
+@Composable
+private fun SenderHeader(
+    name: String,
+    color: Color,
+    time: String,
+    simLabel: String?,
+) {
+    Row(
+        modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 14.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = name.uppercase(),
+            style = MaterialTheme.typography.labelLargeEmphasized,
+            color = color,
+            maxLines = 1,
+        )
+        Text(
+            text = listOfNotNull(time, simLabel).joinToString(SEPARATOR),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
         )
     }
 }
+
+@Composable
+private fun DeliveryFooter(status: OutgoingStatus) {
+    val motion = MaterialTheme.motionScheme
+    AnimatedContent(
+        targetState = status,
+        transitionSpec = {
+            (slideInVertically(motion.fastSpatialSpec()) { it } + fadeIn(motion.fastEffectsSpec()))
+                .togetherWith(slideOutVertically(motion.fastSpatialSpec()) { -it } + fadeOut(motion.fastEffectsSpec()))
+        },
+        modifier = Modifier.padding(start = DetailIndent, top = 2.dp, bottom = 2.dp),
+    ) { current ->
+        val tint = if (current.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Icon(current.icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = tint)
+            Text(
+                text = stringResource(current.label),
+                style = MaterialTheme.typography.labelSmall,
+                color = tint,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MessageDetails(message: Message, sim: SimInfo?, showSim: Boolean) {
+    val context = LocalContext.current
+    val parts = buildList {
+        add(formatMessageTimestamp(context, message.date))
+        if (showSim) {
+            add(
+                sim?.let { stringResource(R.string.chat_sim_detail, it.slotIndex + 1, it.label) }
+                    ?: stringResource(R.string.chat_sim_unknown),
+            )
+        }
+    }
+    Text(
+        text = parts.joinToString(SEPARATOR),
+        modifier = Modifier.padding(start = DetailIndent, top = 2.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun rememberEntranceProgress(message: Message): State<Float> {
+    val motion = MaterialTheme.motionScheme
+    val progress = remember(message.id) {
+        val age = System.currentTimeMillis() - message.date
+        Animatable(if (age in 0..FRESH_MESSAGE_MILLIS) 0f else 1f)
+    }
+    LaunchedEffect(progress) {
+        if (progress.value < 1f) progress.animateTo(1f, motion.slowSpatialSpec())
+    }
+    return progress.asState()
+}
+
+@Composable
+private fun senderLabel(row: ChatItem.MessageRow): String = when {
+    row.message.isOutgoing -> stringResource(R.string.chat_sender_me)
+    row.senderName != null -> row.senderName
+    else -> stringResource(R.string.chat_sender_unknown)
+}
+
+@Composable
+private fun simShortLabel(sim: SimInfo?): String =
+    sim?.let { stringResource(R.string.chat_sim, it.slotIndex + 1) } ?: stringResource(R.string.chat_sim_unknown)
+
+private enum class OutgoingStatus(
+    val icon: ImageVector,
+    @param:StringRes val label: Int,
+    val isError: Boolean = false,
+) {
+    Sending(Icons.Rounded.Schedule, R.string.chat_status_sending),
+    Sent(Icons.Rounded.Done, R.string.chat_status_sent),
+    Delivered(Icons.Rounded.DoneAll, R.string.chat_status_delivered),
+    NotDelivered(Icons.Rounded.ErrorOutline, R.string.chat_status_not_delivered, isError = true),
+    Failed(Icons.Rounded.ErrorOutline, R.string.chat_status_failed, isError = true),
+    Draft(Icons.Rounded.Edit, R.string.chat_status_draft),
+}
+
+private fun outgoingStatusOf(message: Message): OutgoingStatus? = when {
+    !message.isOutgoing -> null
+    message.type == MessageType.FAILED -> OutgoingStatus.Failed
+    message.type == MessageType.QUEUED || message.type == MessageType.OUTBOX -> OutgoingStatus.Sending
+    message.type == MessageType.DRAFT -> OutgoingStatus.Draft
+    message.status == DeliveryStatus.COMPLETE -> OutgoingStatus.Delivered
+    message.status == DeliveryStatus.FAILED -> OutgoingStatus.NotDelivered
+    else -> OutgoingStatus.Sent
+}
+
+private const val SEPARATOR = " · "
+private const val FRESH_MESSAGE_MILLIS = 2_000L
+private const val HIGHLIGHT_MILLIS = 1_600L
+private const val HIGHLIGHT_IN_MILLIS = 250
+private const val HIGHLIGHT_OUT_MILLIS = 900
+private val AccentWidth = 3.dp
+private val EntranceShift = 24.dp
+private val DetailIndent = 23.dp

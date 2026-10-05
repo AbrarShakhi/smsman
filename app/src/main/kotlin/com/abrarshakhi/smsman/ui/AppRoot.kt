@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import com.abrarshakhi.smsman.navigation.AppRouteKey
+import com.abrarshakhi.smsman.navigation.NavTransitions
 import com.abrarshakhi.smsman.navigation.Navigator
 import com.abrarshakhi.smsman.navigation.TOP_LEVEL_ROUTES
 import com.abrarshakhi.smsman.navigation.appEntryProvider
@@ -52,6 +53,7 @@ private fun AppShell(deepLinkRoute: NavKey?) {
     val navigator = remember(navigationState) { Navigator(navigationState) }
     val entryProvider = remember(navigator) { appEntryProvider(navigator) }
     val motion = MaterialTheme.motionScheme
+    val transitions = remember(motion) { NavTransitions(motion) }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -73,6 +75,9 @@ private fun AppShell(deepLinkRoute: NavKey?) {
         NavDisplay(
             entries = navigationState.toDecoratedEntries(entryProvider),
             onBack = navigator::goBack,
+            transitionSpec = transitions.forward(),
+            popTransitionSpec = transitions.pop(),
+            predictivePopTransitionSpec = transitions.predictivePop(),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
